@@ -1,17 +1,24 @@
 "use client";
 
-import { useFormStatus } from "react-dom";
+import { PendingButton } from "@/components/pending-button";
+import type { IconComponent } from "@/components/ui/icon";
 
-export function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
-  const { pending } = useFormStatus();
+type Props = {
+  label: string;
+  pendingLabel: string;
+  variant?: "primary" | "secondary";
+  icon?: IconComponent;
+};
 
+export function SubmitButton({ label, pendingLabel, variant = "primary", icon }: Props) {
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? pendingLabel : label}
-    </button>
+    <PendingButton
+      label={label}
+      pendingLabel={pendingLabel}
+      variant={variant}
+      size="lg"
+      icon={icon}
+      fullWidth
+    />
   );
 }

@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+
+  /* primary (indigo) */
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+
+  /* neutral (slate) */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+  --color-ink: #0f172a;
+  --color-ink-muted: #475569;
+  --color-ink-subtle: #64748b;
+
+  /* status: fg / bg / line */
+  --color-todo-fg: #334155;
+  --color-todo-bg: #f1f5f9;
+  --color-doing-fg: #075985;
+  --color-doing-bg: #e0f2fe;
+  --color-done-fg: #166534;
+  --color-done-bg: #dcfce7;
+  --color-overdue-fg: #b91c1c;
+  --color-overdue-bg: #fee2e2;
+  --color-overdue-line: #fecaca;
+  --color-warning-fg: #92400e;
+  --color-warning-bg: #fef3c7;
+  --color-warning-line: #fde68a;
+  --color-info-fg: #1e40af;
+  --color-info-bg: #dbeafe;
+  --color-info-line: #bfdbfe;
+  --color-success-solid: #15803d;
+  --color-danger-solid: #b91c1c;
+
+  /* radius / shadow */
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-panel: 1rem;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 1px rgb(15 23 42 / 0.03);
+  --shadow-pop: 0 4px 12px -2px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+}
+
+/* UI ออกแบบเป็นธีมสว่างเท่านั้น จึงไม่รองรับ dark mode */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+/* อยู่ใน layer base เพื่อให้ utility ของ field override ได้ */
+@layer base {
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: 2px;
+  }
+}
+
+.page-wash {
+  background-image: linear-gradient(180deg, var(--color-primary-50) 0, var(--color-bg) 280px);
 }

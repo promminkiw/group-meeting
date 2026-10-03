@@ -1,35 +1,39 @@
+import { AlertTriangle, CheckCircle2, Circle, Clock, Loader } from "lucide-react";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
+import type { IconComponent } from "@/components/ui/icon";
 import type { DeadlineState } from "@/lib/tasks/deadline";
 import { TASK_STATUS_LABELS } from "@/lib/tasks/labels";
 import type { TaskStatus } from "@/types/database";
 
-const STATUS_CLASSES: Record<TaskStatus, string> = {
-  todo: "bg-zinc-100 text-zinc-700",
-  doing: "bg-blue-50 text-blue-800",
-  done: "bg-green-50 text-green-800",
+const STATUS_TONES: Record<TaskStatus, { tone: BadgeTone; icon: IconComponent }> = {
+  todo: { tone: "todo", icon: Circle },
+  doing: { tone: "doing", icon: Loader },
+  done: { tone: "done", icon: CheckCircle2 },
 };
 
-// สีเป็นเพียงตัวเสริม ความหมายอยู่ที่ข้อความ
+// ความหมายอยู่ที่ข้อความและไอคอน สีเป็นเพียงตัวเสริม
 export function StatusBadge({ status }: { status: TaskStatus }) {
+  const { tone, icon } = STATUS_TONES[status];
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_CLASSES[status]}`}>
+    <Badge tone={tone} icon={icon}>
       {TASK_STATUS_LABELS[status]}
-    </span>
+    </Badge>
   );
 }
 
 export function DeadlineBadge({ state }: { state: DeadlineState }) {
   if (state === "overdue") {
     return (
-      <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+      <Badge tone="overdue" icon={AlertTriangle}>
         เลยกำหนด
-      </span>
+      </Badge>
     );
   }
   if (state === "today") {
     return (
-      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+      <Badge tone="warning" icon={Clock}>
         ครบกำหนดวันนี้
-      </span>
+      </Badge>
     );
   }
   return null;

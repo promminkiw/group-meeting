@@ -1,59 +1,45 @@
-import Link from "next/link";
+import { GroupNav, type GroupNavItem } from "@/components/shell/group-nav";
+import { Badge } from "@/components/ui/badge";
 import { getGroupContext } from "@/lib/groups/dal";
 import { ROLE_LABELS } from "@/lib/groups/labels";
 import { can } from "@/lib/permissions";
+import { ShieldCheck, User } from "lucide-react";
 
 export default async function GroupLayout({ children, params }: LayoutProps<"/groups/[groupId]">) {
   const { groupId } = await params;
   const { group, role } = await getGroupContext(groupId);
+  const base = `/groups/${group.id}`;
+
+  const navItems: GroupNavItem[] = [
+    { key: "overview", href: base, label: "ภาพรวม" },
+    { key: "tasks", href: `${base}/tasks`, label: "งาน" },
+    { key: "calendar", href: `${base}/calendar`, label: "ปฏิทิน" },
+    ...(can(role, "fillAvailability")
+      ? [
+          {
+            key: "availability" as const,
+            href: `${base}/availability`,
+            label: "เวลาว่างของฉัน",
+            shortLabel: "เวลาว่าง",
+          },
+        ]
+      : []),
+    ...(can(role, "manageMembers")
+      ? [{ key: "members" as const, href: `${base}/members`, label: "จัดการสมาชิก" }]
+      : []),
+  ];
 
   return (
-    <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
-      <Link href="/" className="text-sm text-zinc-600 hover:text-zinc-900">
-        &larr; กลุ่มของฉัน
-      </Link>
-      <header className="mt-3 flex flex-wrap items-center gap-2">
-        <h1 className="break-words text-xl font-semibold sm:text-2xl">{group.name}</h1>
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700">
+    <div className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-10">
+      <header className="flex flex-wrap items-center gap-3 pb-4">
+        <h1 className="break-words text-2xl font-bold leading-[1.35] tracking-tight sm:text-3xl">
+          {group.name}
+        </h1>
+        <Badge tone={role === "admin" ? "primary" : "neutral"} icon={role === "admin" ? ShieldCheck : User}>
           {ROLE_LABELS[role]}
-        </span>
+        </Badge>
       </header>
-      <nav
-        aria-label="เมนูกลุ่ม"
-        className="mt-4 flex flex-wrap gap-x-4 border-b border-zinc-200 text-sm"
-      >
-        <Link href={`/groups/${group.id}`} className="-mb-px border-b-2 border-transparent pb-2 hover:border-zinc-400">
-          ภาพรวม
-        </Link>
-        <Link
-          href={`/groups/${group.id}/tasks`}
-          className="-mb-px border-b-2 border-transparent pb-2 hover:border-zinc-400"
-        >
-          งาน
-        </Link>
-        <Link
-          href={`/groups/${group.id}/calendar`}
-          className="-mb-px border-b-2 border-transparent pb-2 hover:border-zinc-400"
-        >
-          ปฏิทิน
-        </Link>
-        {can(role, "fillAvailability") && (
-          <Link
-            href={`/groups/${group.id}/availability`}
-            className="-mb-px border-b-2 border-transparent pb-2 hover:border-zinc-400"
-          >
-            เวลาว่างของฉัน
-          </Link>
-        )}
-        {can(role, "manageMembers") && (
-          <Link
-            href={`/groups/${group.id}/members`}
-            className="-mb-px border-b-2 border-transparent pb-2 hover:border-zinc-400"
-          >
-            จัดการสมาชิก
-          </Link>
-        )}
-      </nav>
+      <GroupNav items={navItems} />
       <div className="mt-6">{children}</div>
     </div>
   );

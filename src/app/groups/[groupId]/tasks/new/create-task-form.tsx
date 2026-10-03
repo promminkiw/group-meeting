@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { PendingButton } from "@/components/pending-button";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Checkbox, Input, Textarea } from "@/components/ui/field";
 import { TASK_DESCRIPTION_MAX_LENGTH, TASK_TITLE_MAX_LENGTH } from "@/lib/tasks/validation";
 import { createTask, type TaskActionState } from "../actions";
 
@@ -21,85 +24,69 @@ export function CreateTaskForm({ groupId, members }: { groupId: string; members:
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-5">
       <input type="hidden" name="groupId" value={groupId} />
-      <div>
-        <label htmlFor="task-title" className="block text-sm font-medium text-zinc-700">
-          ชื่องาน
-        </label>
-        <input
-          id="task-title"
-          name="title"
-          type="text"
-          required
-          maxLength={TASK_TITLE_MAX_LENGTH}
-          defaultValue={state.values?.title}
-          className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-base"
-        />
-      </div>
-      <div>
-        <label htmlFor="task-description" className="block text-sm font-medium text-zinc-700">
-          รายละเอียด (ไม่บังคับ)
-        </label>
-        <textarea
-          id="task-description"
-          name="description"
-          rows={4}
-          maxLength={TASK_DESCRIPTION_MAX_LENGTH}
-          defaultValue={state.values?.description}
-          className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-base"
-        />
-      </div>
-      <div>
-        <label htmlFor="task-deadline" className="block text-sm font-medium text-zinc-700">
-          กำหนดส่ง (ไม่บังคับ, เวลาประเทศไทย)
-        </label>
-        <input
-          id="task-deadline"
-          name="deadline"
-          type="datetime-local"
-          defaultValue={state.values?.deadline}
-          className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-base sm:w-auto"
-        />
-      </div>
+      <Input
+        id="task-title"
+        name="title"
+        type="text"
+        label="ชื่องาน"
+        required
+        maxLength={TASK_TITLE_MAX_LENGTH}
+        defaultValue={state.values?.title}
+      />
+      <Textarea
+        id="task-description"
+        name="description"
+        label="รายละเอียด (ไม่บังคับ)"
+        rows={4}
+        maxLength={TASK_DESCRIPTION_MAX_LENGTH}
+        defaultValue={state.values?.description}
+      />
+      <Input
+        id="task-deadline"
+        name="deadline"
+        type="datetime-local"
+        label="กำหนดส่ง (ไม่บังคับ, เวลาประเทศไทย)"
+        defaultValue={state.values?.deadline}
+        className="sm:w-auto"
+      />
       <fieldset>
-        <legend className="text-sm font-medium text-zinc-700">ผู้รับผิดชอบ</legend>
-        <ul className="mt-2 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
+        <legend className="mb-1.5 text-sm font-medium text-ink">ผู้รับผิดชอบ</legend>
+        <ul className="divide-y divide-line rounded-card border border-line bg-surface">
           {members.map((member) => (
-            <li key={member.userId}>
-              <label className="flex min-h-11 cursor-pointer items-center gap-3 px-4 py-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="assigneeIds"
-                  value={member.userId}
-                  checked={selected.includes(member.userId)}
-                  onChange={() => toggle(member.userId)}
-                  className="size-4"
-                />
-                <span className="min-w-0 break-words">{member.displayName}</span>
-              </label>
+            <li key={member.userId} className="px-4">
+              <Checkbox
+                id={`assignee-${member.userId}`}
+                name="assigneeIds"
+                value={member.userId}
+                label={member.displayName}
+                checked={selected.includes(member.userId)}
+                onChange={() => toggle(member.userId)}
+              />
             </li>
           ))}
         </ul>
         {selected.length === 0 && (
-          <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+          <Alert tone="warning" className="mt-3">
             ยังไม่ได้เลือกผู้รับผิดชอบ งานนี้จะไม่ปรากฏในตารางงานค้างของใคร (เพิ่มภายหลังได้)
-          </p>
+          </Alert>
         )}
       </fieldset>
-      {state.error && (
-        <p role="alert" className="text-sm text-red-600">
-          {state.error}
-        </p>
-      )}
+      <Alert tone="error">{state.error}</Alert>
       {state.createdTaskHref && (
-        <p className="text-sm">
-          <Link href={state.createdTaskHref} className="font-medium text-zinc-900 underline">
+        <Alert tone="info">
+          <Link href={state.createdTaskHref} className="font-medium underline">
             เปิดงานที่สร้างไว้
           </Link>
-        </p>
+        </Alert>
       )}
-      <PendingButton label="สร้างงาน" pendingLabel="กำลังสร้าง..." className="w-full sm:w-auto" />
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <Button href={`/groups/${groupId}/tasks`} variant="ghost">
+          ยกเลิก
+        </Button>
+        <PendingButton label="สร้างงาน" pendingLabel="กำลังสร้าง..." className="max-sm:w-full" />
+      </div>
     </form>
   );
 }

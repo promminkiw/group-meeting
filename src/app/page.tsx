@@ -1,5 +1,10 @@
-import Link from "next/link";
-import { signOut } from "@/app/(auth)/actions";
+import { ChevronRight, KeyRound, Plus, Users } from "lucide-react";
+import { AppHeader } from "@/components/shell/app-header";
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardLink } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { getCurrentProfile, verifySession } from "@/lib/auth/dal";
 import { getMyGroups } from "@/lib/groups/dal";
 import { ROLE_LABELS } from "@/lib/groups/labels";
@@ -9,78 +14,106 @@ import { JoinGroupForm } from "./join-group-form";
 export default async function Home() {
   await verifySession();
   const [profile, groups] = await Promise.all([getCurrentProfile(), getMyGroups()]);
+  const hasGroups = groups.length > 0;
+
+  const groupsSection = (
+    <section aria-labelledby="my-groups-heading">
+      <h2 id="my-groups-heading" className="mb-3 text-xl font-semibold leading-[1.4]">
+        กลุ่มของฉัน
+      </h2>
+      {hasGroups ? (
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {groups.map((group) => (
+            <li key={group.id}>
+              <CardLink href={`/groups/${group.id}`} className="group h-full">
+                <div className="flex items-start gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+                    <Users className="size-5" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words text-base font-semibold leading-[1.5]">{group.name}</p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                      <Badge tone={group.role === "admin" ? "primary" : "neutral"}>
+                        {ROLE_LABELS[group.role]}
+                      </Badge>
+                      <span className="text-xs leading-[1.6] text-ink-muted">
+                        <span className="tabular-nums">{group.memberCount}</span> สมาชิก
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight
+                    className="mt-2.5 size-4 shrink-0 text-ink-subtle transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
+                    aria-hidden="true"
+                  />
+                </div>
+              </CardLink>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyState
+          icon={Users}
+          title="ยังไม่มีกลุ่ม"
+          description="สร้างกลุ่มแรก หรือเข้ากลุ่มด้วยโค้ดเชิญจากเพื่อน"
+        />
+      )}
+    </section>
+  );
+
+  const actionsSection = (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card as="section" aria-labelledby="create-group-heading">
+        <h2
+          id="create-group-heading"
+          className="mb-4 flex items-center gap-2 text-base font-semibold leading-[1.5]"
+        >
+          <Plus className="size-[18px] text-primary-600" aria-hidden="true" />
+          สร้างกลุ่มใหม่
+        </h2>
+        <CreateGroupForm />
+      </Card>
+      <Card as="section" aria-labelledby="join-group-heading">
+        <h2
+          id="join-group-heading"
+          className="mb-4 flex items-center gap-2 text-base font-semibold leading-[1.5]"
+        >
+          <KeyRound className="size-[18px] text-primary-600" aria-hidden="true" />
+          เข้ากลุ่มด้วยโค้ดเชิญ
+        </h2>
+        <JoinGroupForm />
+      </Card>
+    </div>
+  );
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold sm:text-2xl">
-          {profile ? `สวัสดี ${profile.display_name}` : "สวัสดี"}
-        </h1>
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100"
-          >
-            ออกจากระบบ
-          </button>
-        </form>
-      </header>
-      {!profile && (
-        <p role="alert" className="mt-2 text-sm text-red-600">
-          ไม่สามารถโหลดข้อมูลโปรไฟล์ได้ในขณะนี้
-        </p>
-      )}
-
-      <section className="mt-8" aria-labelledby="my-groups-heading">
-        <h2 id="my-groups-heading" className="text-lg font-semibold">
-          กลุ่มของฉัน
-        </h2>
-        {groups.length === 0 ? (
-          <p className="mt-3 rounded-xl border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-600">
-            คุณยังไม่ได้อยู่ในกลุ่มใด ลองสร้างกลุ่มใหม่ หรือเข้ากลุ่มด้วยโค้ดเชิญด้านล่าง
-          </p>
-        ) : (
-          <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-            {groups.map((group) => (
-              <li key={group.id}>
-                <Link
-                  href={`/groups/${group.id}`}
-                  className="block rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-zinc-400"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="break-words font-medium">{group.name}</span>
-                    <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700">
-                      {ROLE_LABELS[group.role]}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-zinc-600">{group.memberCount} สมาชิก</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <div className="mt-8 grid gap-6 sm:grid-cols-2">
-        <section
-          aria-labelledby="create-group-heading"
-          className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5"
-        >
-          <h2 id="create-group-heading" className="mb-3 text-base font-semibold">
-            สร้างกลุ่มใหม่
-          </h2>
-          <CreateGroupForm />
-        </section>
-        <section
-          aria-labelledby="join-group-heading"
-          className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5"
-        >
-          <h2 id="join-group-heading" className="mb-3 text-base font-semibold">
-            เข้ากลุ่มด้วยโค้ดเชิญ
-          </h2>
-          <JoinGroupForm />
-        </section>
-      </div>
-    </main>
+    <>
+      <AppHeader />
+      <main id="main" className="page-wash min-h-[calc(100dvh-3.5rem)]">
+        <div className="mx-auto w-full max-w-5xl px-4 py-6 pb-10 sm:px-6 sm:py-8">
+          <PageHeader
+            title={profile ? `สวัสดี ${profile.display_name}` : "สวัสดี"}
+            description="เลือกกลุ่มเพื่อทำงานต่อ"
+          />
+          {!profile && (
+            <Alert tone="warning" className="mb-6">
+              ไม่สามารถโหลดข้อมูลโปรไฟล์ได้ในขณะนี้
+            </Alert>
+          )}
+          <div className="space-y-8">
+            {hasGroups ? (
+              <>
+                {groupsSection}
+                {actionsSection}
+              </>
+            ) : (
+              <>
+                {actionsSection}
+                {groupsSection}
+              </>
+            )}
+          </div>
+        </div>
+      </main>
+    </>
   );
 }

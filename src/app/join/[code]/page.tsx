@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { AlertTriangle, UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { verifySession } from "@/lib/auth/dal";
 import { isInviteCode } from "@/lib/groups/validation";
 import { JoinForm } from "./join-form";
@@ -9,27 +10,36 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
   const { code } = await params;
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6">
-      <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
+    <div className="flex items-center justify-center px-4 py-10 sm:px-6 sm:py-16">
+      <div className="w-full max-w-md rounded-panel border border-line bg-surface p-6 text-center shadow-pop sm:p-8">
         {isInviteCode(code) ? (
-          <div className="space-y-4">
-            <h1 className="text-xl font-semibold">คุณได้รับเชิญเข้ากลุ่ม</h1>
-            <p className="text-sm text-zinc-600">กดปุ่มด้านล่างเพื่อยืนยันการเข้าร่วมกลุ่มนี้</p>
-            <JoinForm code={code} />
+          <div className="flex flex-col items-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-primary-50 text-primary-600">
+              <UserPlus className="size-[22px]" aria-hidden="true" />
+            </span>
+            <h1 className="mt-4 text-xl font-semibold leading-[1.4]">คุณได้รับเชิญเข้ากลุ่ม</h1>
+            <p className="mt-1 text-sm text-ink-muted">
+              กดปุ่มด้านล่างเพื่อยืนยันการเข้าร่วมกลุ่มนี้
+            </p>
+            <div className="mt-6 w-full">
+              <JoinForm code={code} />
+            </div>
           </div>
         ) : (
-          <div role="alert" className="space-y-4">
-            <h1 className="text-xl font-semibold">ลิงก์เชิญไม่ถูกต้อง</h1>
-            <p className="text-sm text-zinc-600">กรุณาตรวจสอบลิงก์ หรือขอลิงก์ใหม่จากผู้ดูแลกลุ่ม</p>
-            <Link
-              href="/"
-              className="inline-block rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-            >
-              กลับหน้าแรก
-            </Link>
+          <div role="alert" className="flex flex-col items-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-overdue-bg text-overdue-fg">
+              <AlertTriangle className="size-[22px]" aria-hidden="true" />
+            </span>
+            <h1 className="mt-4 text-xl font-semibold leading-[1.4]">ลิงก์เชิญไม่ถูกต้อง</h1>
+            <p className="mt-1 text-sm text-ink-muted">
+              กรุณาตรวจสอบลิงก์ หรือขอลิงก์ใหม่จากผู้ดูแลกลุ่ม
+            </p>
+            <div className="mt-6">
+              <Button href="/">กลับหน้าแรก</Button>
+            </div>
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

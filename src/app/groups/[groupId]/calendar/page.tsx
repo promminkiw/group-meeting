@@ -1,4 +1,10 @@
-import Link from "next/link";
+import { CalendarPlus, Clock, Users } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { SegmentedFilter } from "@/components/ui/tabs";
 import { formatEventRange, parseCalendarView, visibleSlotRange } from "@/lib/availability/display";
 import { getGroupAvailability, getUpcomingEvents } from "@/lib/availability/dal";
 import { computeHeatmap, DAYS_PER_WEEK } from "@/lib/availability/heatmap";
@@ -7,6 +13,11 @@ import { getGroupContext } from "@/lib/groups/dal";
 import { can } from "@/lib/permissions";
 import { CalendarHeatmap } from "./calendar-heatmap";
 import { DeleteEventForm } from "./delete-event-form";
+
+const dayFormatter = new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", day: "numeric" });
+const monthFormatter = new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", month: "short" });
+
+const SECTION_HEADING = "text-xl font-semibold leading-[1.4]";
 
 export default async function CalendarPage({
   params,
@@ -32,6 +43,7 @@ export default async function CalendarPage({
   const respondedCount = new Set(
     availability.slots.map((slot) => slot.userId).filter((id) => memberIdSet.has(id)),
   ).size;
+  const respondedPercent = members.length === 0 ? 0 : Math.round((respondedCount / members.length) * 100);
 
   const now = new Date();
   const nextDates = Array.from({ length: DAYS_PER_WEEK }, (_, day) => nextOccurrenceDate(day, now));
@@ -39,65 +51,99 @@ export default async function CalendarPage({
   const basePath = `/groups/${group.id}/calendar`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <PageHeader as="h2" title="ปฏิทิน" description="ดูนัดหมายและช่วงเวลาที่สมาชิกว่างตรงกัน" />
+
       <section aria-label="นัดหมายที่จะมาถึง" className="space-y-3">
-        <h2 className="text-lg font-semibold">นัดหมายที่จะมาถึง</h2>
+        <h3 className={SECTION_HEADING}>นัดหมายที่จะมาถึง</h3>
         {events.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 p-4 text-center text-sm text-zinc-600">
-            ยังไม่มีนัดหมาย
-            {canCreateEvent && " เลือกช่องเวลาในปฏิทินด้านล่างเพื่อสร้างนัดหมาย"}
-          </p>
+          <EmptyState
+            icon={CalendarPlus}
+            title="ยังไม่มีนัดหมาย"
+            description={
+              canCreateEvent ? "เลือกช่องเวลาในปฏิทินด้านล่างเพื่อสร้างนัดหมาย" : "เมื่อมีนัดหมายใหม่จะแสดงที่นี่"
+            }
+          />
         ) : (
-          <ul className="space-y-2">
-            {events.map((event) => (
-              <li
-                key={event.id}
-                className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
-              >
-                <div className="min-w-0">
-                  <p className="break-words font-medium">{event.title}</p>
-                  <p className="mt-0.5 text-sm text-zinc-700">{formatEventRange(event.starts_at, event.ends_at)}</p>
-                  {event.description && (
-                    <p className="mt-1 whitespace-pre-line break-words text-sm text-zinc-600">{event.description}</p>
-                  )}
-                </div>
-                {canCreateEvent && <DeleteEventForm groupId={group.id} eventId={event.id} />}
-              </li>
-            ))}
+          <ul className="space-y-3">
+            {events.map((event) => {
+              const startsAt = new Date(event.starts_at);
+              return (
+                <Card as="li" key={event.id} padding="sm" className="flex flex-wrap items-start gap-4">
+                  <div
+                    aria-hidden="true"
+                    className="flex size-12 shrink-0 flex-col items-center justify-center rounded-lg bg-primary-50 text-primary-700"
+                  >
+                    <span className="text-lg font-bold leading-[1.2] tabular-nums">
+                      {dayFormatter.format(startsAt)}
+                    </span>
+                    <span className="text-xs leading-[1.4]">{monthFormatter.format(startsAt)}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words text-base font-semibold leading-[1.5]">{event.title}</p>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-sm text-ink-muted">
+                      <Clock className="size-3.5 shrink-0" aria-hidden="true" />
+                      {formatEventRange(event.starts_at, event.ends_at)}
+                    </p>
+                    {event.description && (
+                      <p className="mt-1 whitespace-pre-line break-words text-sm text-ink-muted">
+                        {event.description}
+                      </p>
+                    )}
+                  </div>
+                  {canCreateEvent && <DeleteEventForm groupId={group.id} eventId={event.id} />}
+                </Card>
+              );
+            })}
           </ul>
         )}
       </section>
 
       <section aria-label="ปฏิทินเวลาว่างของกลุ่ม" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">ปฏิทินกลาง</h2>
-          <Link
-            href={view === "all" ? basePath : `${basePath}?view=all`}
-            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100"
-          >
-            {view === "all" ? "แสดงเฉพาะ 06:00-24:00" : "แสดงทั้งวัน"}
-          </Link>
+          <h3 className={SECTION_HEADING}>ปฏิทินกลาง</h3>
+          <SegmentedFilter
+            label="ช่วงเวลาที่แสดง"
+            value={view}
+            items={[
+              { value: "default", label: "06:00-24:00", href: basePath },
+              { value: "all", label: "ทั้งวัน", href: `${basePath}?view=all` },
+            ]}
+          />
         </div>
-        <p className="text-sm text-zinc-700">
-          กรอกเวลาว่างแล้ว {respondedCount} จาก {members.length} คน (เวลาประเทศไทย, ซ้ำทุกสัปดาห์)
-        </p>
+
+        <div className="space-y-1.5">
+          <p className="flex items-center gap-2 text-sm text-ink-muted">
+            <Users className="size-4 shrink-0" aria-hidden="true" />
+            <span className="tabular-nums">
+              กรอกเวลาว่างแล้ว {respondedCount} จาก {members.length} คน
+            </span>
+            <span className="text-xs">(เวลาประเทศไทย, ซ้ำทุกสัปดาห์)</span>
+          </p>
+          <div
+            role="img"
+            aria-label={`กรอกแล้ว ${respondedCount} จาก ${members.length} คน`}
+            className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-line"
+          >
+            <div className="h-full rounded-full bg-primary-600" style={{ width: `${respondedPercent}%` }} />
+          </div>
+        </div>
 
         {truncated && (
-          <p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+          <Alert tone="warning">
             ข้อมูลเวลาว่างมีจำนวนมากเกินกว่าจะแสดงครบ ตัวเลขในตารางอาจต่ำกว่าความจริง
-          </p>
+          </Alert>
         )}
 
         {respondedCount === 0 && (
-          <div className="rounded-xl border border-dashed border-zinc-300 p-4 text-center text-sm text-zinc-700">
-            <p>ยังไม่มีสมาชิกคนไหนกรอกเวลาว่าง</p>
-            <Link
-              href={`/groups/${group.id}/availability`}
-              className="mt-2 inline-block rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700"
-            >
-              กรอกเวลาว่างของฉัน
-            </Link>
-          </div>
+          <EmptyState
+            icon={Clock}
+            title="ยังไม่มีใครกรอกเวลาว่าง"
+            description="ให้สมาชิกกรอกเวลาว่างก่อน ปฏิทินจะแสดงช่วงเวลาที่ว่างตรงกัน"
+            action={
+              <Button href={`/groups/${group.id}/availability`}>กรอกเวลาว่างของฉัน</Button>
+            }
+          />
         )}
 
         <CalendarHeatmap

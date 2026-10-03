@@ -1,32 +1,57 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-
-type Variant = "primary" | "secondary" | "danger";
-
-const VARIANT_CLASSES: Record<Variant, string> = {
-  primary: "bg-zinc-900 text-white hover:bg-zinc-700",
-  secondary: "border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-100",
-  danger: "border border-red-300 bg-white text-red-700 hover:bg-red-50",
-};
+import { Loader2 } from "lucide-react";
+import { Button, type ButtonSize, type ButtonVariant } from "@/components/ui/button";
+import type { IconComponent } from "@/components/ui/icon";
+import { cn } from "@/lib/cn";
 
 type Props = {
   label: string;
   pendingLabel: string;
-  variant?: Variant;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  icon?: IconComponent;
+  fullWidth?: boolean;
   className?: string;
 };
 
-export function PendingButton({ label, pendingLabel, variant = "primary", className = "" }: Props) {
+export function PendingButton({
+  label,
+  pendingLabel,
+  variant = "primary",
+  size = "md",
+  icon,
+  fullWidth,
+  className,
+}: Props) {
   const { pending } = useFormStatus();
 
+  // วางข้อความทั้งสองแบบซ้อนกันในช่องเดียว เพื่อให้ความกว้างปุ่มคงที่ตอน pending
   return (
-    <button
+    <Button
       type="submit"
+      variant={variant}
+      size={size}
+      icon={icon}
+      fullWidth={fullWidth}
       disabled={pending}
-      className={`rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${VARIANT_CLASSES[variant]} ${className}`}
+      aria-busy={pending || undefined}
+      className={className}
     >
-      {pending ? pendingLabel : label}
-    </button>
+      <span className="inline-grid">
+        <span className={cn("col-start-1 row-start-1", pending && "invisible")}>{label}</span>
+        <span
+          className={cn(
+            "col-start-1 row-start-1 inline-flex items-center justify-center gap-2",
+            !pending && "invisible",
+          )}
+          aria-hidden={!pending}
+        >
+          <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+          {pendingLabel}
+        </span>
+      </span>
+    </Button>
   );
 }

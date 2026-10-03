@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { sanitizeNextPath } from "@/lib/auth/paths";
+import { AuthDivider } from "../auth-divider";
 import { GoogleButton } from "../google-button";
 import { SignupForm } from "../signup-form";
 
@@ -11,13 +12,13 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">สมัครสมาชิก</h1>
-      <SignupForm next={next} />
-      <div className="text-center text-xs text-zinc-500">หรือ</div>
+      <h1 className="text-xl font-semibold leading-[1.4]">สมัครสมาชิก</h1>
       <GoogleButton next={next} />
-      <p className="text-center text-sm text-zinc-600">
+      <AuthDivider />
+      <SignupForm next={next} />
+      <p className="text-center text-sm text-ink-muted">
         มีบัญชีอยู่แล้ว?{" "}
-        <Link href={loginHref} className="font-medium text-zinc-900 underline">
+        <Link href={loginHref} className="font-medium text-primary-600 hover:text-primary-700">
           เข้าสู่ระบบ
         </Link>
       </p>

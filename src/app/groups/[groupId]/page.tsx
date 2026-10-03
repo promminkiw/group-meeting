@@ -1,3 +1,9 @@
+import { ShieldCheck, User } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { ConfirmDangerZone } from "@/components/ui/danger-zone";
 import { getGroupContext, getGroupMembers } from "@/lib/groups/dal";
 import { ROLE_LABELS } from "@/lib/groups/labels";
 import { can, isLastAdmin } from "@/lib/permissions";
@@ -18,11 +24,17 @@ export default async function GroupOverviewPage({ params }: PageProps<"/groups/[
   const summary = computeSummary(assigneeData.rows, now);
   const workload = computeWorkload(assigneeData.rows, members, now);
   const blockedByLastAdmin = isLastAdmin(members, userId);
+  const canLeave = can(role, "leaveGroup");
+  const canDelete = can(role, "deleteGroup");
 
   return (
     <div className="space-y-8">
       {group.description && (
-        <p className="whitespace-pre-line break-words text-sm text-zinc-700">{group.description}</p>
+        <Card>
+          <p className="whitespace-pre-line break-words text-sm text-ink-muted">
+            {group.description}
+          </p>
+        </Card>
       )}
 
       <Dashboard
@@ -31,55 +43,64 @@ export default async function GroupOverviewPage({ params }: PageProps<"/groups/[
         summary={summary}
         workload={workload}
         truncated={assigneeData.truncated}
+        canCreateTask={can(role, "createTask")}
       />
 
       <section aria-labelledby="members-heading">
-        <h2 id="members-heading" className="text-lg font-semibold">
-          สมาชิก ({members.length})
+        <h2 id="members-heading" className="mb-3 text-xl font-semibold leading-[1.4]">
+          สมาชิก (<span className="tabular-nums">{members.length}</span>)
         </h2>
-        <ul className="mt-3 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
-          {members.map((member) => (
-            <li key={member.userId} className="flex items-center justify-between gap-3 px-4 py-3">
-              <span className="min-w-0 break-words text-sm">
-                {member.displayName}
-                {member.userId === userId && <span className="text-zinc-500"> (คุณ)</span>}
-              </span>
-              <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700">
-                {ROLE_LABELS[member.role]}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <Card as="section" padding="none">
+          <ul className="divide-y divide-line">
+            {members.map((member) => (
+              <li key={member.userId} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar name={member.displayName} size="md" />
+                  <span className="min-w-0 break-words text-sm">
+                    {member.displayName}
+                    {member.userId === userId && <span className="text-ink-subtle"> (คุณ)</span>}
+                  </span>
+                </div>
+                <Badge
+                  tone={member.role === "admin" ? "primary" : "neutral"}
+                  icon={member.role === "admin" ? ShieldCheck : User}
+                  className="shrink-0"
+                >
+                  {ROLE_LABELS[member.role]}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </Card>
       </section>
 
-      {can(role, "leaveGroup") && (
-        <section aria-labelledby="leave-heading">
-          <h2 id="leave-heading" className="text-lg font-semibold">
-            ออกจากกลุ่ม
-          </h2>
-          {blockedByLastAdmin ? (
-            <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-              คุณเป็นผู้ดูแลคนเดียวของกลุ่มนี้ จึงยังออกจากกลุ่มไม่ได้ กรุณามอบสิทธิ์ผู้ดูแลให้สมาชิกคนอื่นก่อน
-              (ที่เมนูจัดการสมาชิก) หรือหากไม่ต้องการใช้กลุ่มนี้แล้ว สามารถลบกลุ่มได้ที่ส่วน
-              &quot;ลบกลุ่ม&quot; ด้านล่าง
-            </p>
-          ) : (
-            <div className="mt-2">
-              <LeaveGroupForm groupId={group.id} />
-            </div>
-          )}
-        </section>
-      )}
+      {(canLeave || canDelete) && (
+        <div className="space-y-6 border-t border-line pt-8">
+          {canLeave &&
+            (blockedByLastAdmin ? (
+              <Alert tone="warning" title="ออกจากกลุ่มไม่ได้">
+                คุณเป็นผู้ดูแลคนเดียวของกลุ่มนี้ จึงยังออกจากกลุ่มไม่ได้ กรุณามอบสิทธิ์ผู้ดูแลให้สมาชิกคนอื่นก่อน
+                (ที่เมนูจัดการสมาชิก) หรือหากไม่ต้องการใช้กลุ่มนี้แล้ว สามารถลบกลุ่มได้ที่ส่วน
+                &quot;ลบกลุ่ม&quot; ด้านล่าง
+              </Alert>
+            ) : (
+              <ConfirmDangerZone
+                title="ออกจากกลุ่ม"
+                description="คุณจะไม่เห็นข้อมูลของกลุ่มนี้อีก จนกว่าจะได้รับเชิญเข้ากลุ่มใหม่"
+              >
+                <LeaveGroupForm groupId={group.id} />
+              </ConfirmDangerZone>
+            ))}
 
-      {can(role, "deleteGroup") && (
-        <section aria-labelledby="delete-group-heading">
-          <h2 id="delete-group-heading" className="text-lg font-semibold">
-            ลบกลุ่ม
-          </h2>
-          <div className="mt-2 rounded-xl border border-red-200 bg-white p-4">
-            <DeleteGroupForm groupId={group.id} groupName={group.name} />
-          </div>
-        </section>
+          {canDelete && (
+            <ConfirmDangerZone
+              title="ลบกลุ่ม"
+              description="การลบกลุ่มจะลบสมาชิก งาน และข้อมูลทั้งหมดของกลุ่มอย่างถาวร ไม่สามารถย้อนกลับได้"
+            >
+              <DeleteGroupForm groupId={group.id} groupName={group.name} />
+            </ConfirmDangerZone>
+          )}
+        </div>
       )}
     </div>
   );

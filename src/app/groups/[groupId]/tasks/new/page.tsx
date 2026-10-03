@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { getGroupContext, getGroupMembers } from "@/lib/groups/dal";
 import { can } from "@/lib/permissions";
 import { CreateTaskForm } from "./create-task-form";
@@ -13,12 +14,14 @@ export default async function NewTaskPage({ params }: PageProps<"/groups/[groupI
   const members = await getGroupMembers(group.id);
 
   return (
-    <div className="space-y-4">
-      <Link href={`/groups/${group.id}/tasks`} className="text-sm text-zinc-600 hover:text-zinc-900">
-        &larr; กลับไปรายการงาน
-      </Link>
-      <h2 className="text-lg font-semibold">สร้างงานใหม่</h2>
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+    <div>
+      <PageHeader
+        as="h2"
+        title="สร้างงานใหม่"
+        backHref={`/groups/${group.id}/tasks`}
+        backLabel="กลับไปรายการงาน"
+      />
+      <Card className="max-w-2xl">
         <CreateTaskForm
           groupId={group.id}
           members={members.map((member) => ({
@@ -26,7 +29,7 @@ export default async function NewTaskPage({ params }: PageProps<"/groups/[groupI
             displayName: member.displayName,
           }))}
         />
-      </div>
+      </Card>
     </div>
   );
 }

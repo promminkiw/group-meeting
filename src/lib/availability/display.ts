@@ -28,11 +28,11 @@ export function heatLevel(intensity: number): HeatLevel {
 
 // คู่สีพื้น/ตัวอักษรที่ตรวจ contrast แล้ว (ตัวเลขในช่องบอกค่าจริงเสมอ ไม่พึ่งสีอย่างเดียว)
 export const HEAT_LEVEL_CLASSES: Record<HeatLevel, string> = {
-  0: "bg-white text-zinc-600",
-  1: "bg-emerald-100 text-emerald-950",
-  2: "bg-emerald-300 text-emerald-950",
-  3: "bg-emerald-700 text-white",
-  4: "bg-emerald-900 text-white",
+  0: "bg-white text-ink-subtle",
+  1: "bg-primary-100 text-primary-900",
+  2: "bg-primary-300 text-[#1E1B4B]",
+  3: "bg-primary-600 text-white",
+  4: "bg-primary-900 text-white",
 };
 
 export function slotRangeLabel(startSlot: number, endSlot: number): string {

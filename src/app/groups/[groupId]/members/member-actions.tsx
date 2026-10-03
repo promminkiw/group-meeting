@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
+import { ShieldCheck, ShieldOff, UserMinus } from "lucide-react";
 import { PendingButton } from "@/components/pending-button";
+import { Alert } from "@/components/ui/alert";
 import { ROLE_LABELS } from "@/lib/groups/labels";
 import type { MemberRole } from "@/types/database";
 import { changeMemberRole, removeMember, type MemberActionState } from "./actions";
@@ -23,9 +25,9 @@ export function MemberActions({ groupId, userId, displayName, role, isSelf }: Pr
   const error = roleState.error ?? removeState.error;
 
   return (
-    <div className="flex flex-col gap-2 sm:items-end">
-      <div className="flex flex-wrap gap-2">
-        <form action={roleAction}>
+    <div className="flex flex-col gap-2 md:items-end">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <form action={roleAction} className="max-sm:contents">
           <input type="hidden" name="groupId" value={groupId} />
           <input type="hidden" name="userId" value={userId} />
           <input type="hidden" name="role" value={nextRole} />
@@ -33,26 +35,33 @@ export function MemberActions({ groupId, userId, displayName, role, isSelf }: Pr
             label={nextRole === "admin" ? "ตั้งเป็นผู้ดูแล" : `เปลี่ยนเป็น${ROLE_LABELS.member}`}
             pendingLabel="กำลังบันทึก..."
             variant="secondary"
+            size="sm"
+            icon={nextRole === "admin" ? ShieldCheck : ShieldOff}
+            className="max-sm:w-full"
           />
         </form>
         {!isSelf && (
           <form
             action={removeAction}
+            className="max-sm:contents"
             onSubmit={(event) => {
               if (!window.confirm(`ลบ ${displayName} ออกจากกลุ่ม?`)) event.preventDefault();
             }}
           >
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="userId" value={userId} />
-            <PendingButton label="ลบออกจากกลุ่ม" pendingLabel="กำลังลบ..." variant="danger" />
+            <PendingButton
+              label="ลบออกจากกลุ่ม"
+              pendingLabel="กำลังลบ..."
+              variant="danger"
+              size="sm"
+              icon={UserMinus}
+              className="max-sm:w-full"
+            />
           </form>
         )}
       </div>
-      {error && (
-        <p role="alert" className="text-sm text-red-600 sm:text-right">
-          {error}
-        </p>
-      )}
+      <Alert tone="error">{error}</Alert>
     </div>
   );
 }

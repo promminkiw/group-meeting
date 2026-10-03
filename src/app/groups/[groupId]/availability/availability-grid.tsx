@@ -1,7 +1,12 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { Check } from "lucide-react";
 import { PendingButton } from "@/components/pending-button";
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/cn";
 import { DAY_LABELS, DAY_SHORT_LABELS } from "@/lib/availability/display";
 import { DAYS_PER_WEEK, SLOTS_PER_DAY, slotIndexToTimeLabel } from "@/lib/availability/heatmap";
 import { toSlotKey } from "@/lib/availability/slots";
@@ -10,6 +15,9 @@ import { saveAvailability, type AvailabilityActionState } from "./actions";
 const initialState: AvailabilityActionState = {};
 const DAYS = Array.from({ length: DAYS_PER_WEEK }, (_, day) => day);
 const SLOTS = Array.from({ length: SLOTS_PER_DAY }, (_, slot) => slot);
+
+const DAY_ACTION_CLASSES =
+  "min-h-7 rounded py-1 text-[11px] font-medium text-primary-700 hover:underline";
 
 type DragMode = "add" | "remove";
 
@@ -113,102 +121,110 @@ export function AvailabilityGrid({ groupId, initialKeys }: { groupId: string; in
         <input key={key} type="hidden" name="slots" value={key} />
       ))}
 
-      <div className="max-h-[70vh] overflow-auto rounded-xl border border-zinc-200 bg-white">
-        <table
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onClick={handleClick}
-          className="w-full min-w-[26rem] select-none border-separate border-spacing-0 text-center"
-        >
-          <caption className="sr-only">ตารางเลือกเวลาว่างรายสัปดาห์ ช่องละ 30 นาที</caption>
-          <thead>
-            <tr>
-              <th scope="col" className="sticky left-0 top-0 z-30 border-b border-r border-zinc-200 bg-zinc-50 px-2 py-2 text-xs font-medium text-zinc-700">
-                เวลา
-              </th>
-              {DAYS.map((day) => (
+      <Card padding="none" className="overflow-hidden">
+        <div className="max-h-[70vh] overflow-auto">
+          <table
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onClick={handleClick}
+            className="w-full min-w-[26rem] select-none border-separate border-spacing-0 text-center"
+          >
+            <caption className="sr-only">ตารางเลือกเวลาว่างรายสัปดาห์ ช่องละ 30 นาที</caption>
+            <thead>
+              <tr>
                 <th
-                  key={day}
                   scope="col"
-                  className="sticky top-0 z-20 border-b border-zinc-200 bg-zinc-50 px-1 py-2 text-xs font-medium text-zinc-800"
+                  className="sticky left-0 top-0 z-30 border-b border-r border-line bg-surface-muted px-2 py-2 text-xs font-medium text-ink-muted"
                 >
-                  <span aria-hidden="true">{DAY_SHORT_LABELS[day]}</span>
-                  <span className="sr-only">{DAY_LABELS[day]}</span>
-                  <div className="mt-1 flex flex-col items-stretch gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setDay(day, true)}
-                      aria-label={`เลือกทั้งวัน${DAY_LABELS[day]}`}
-                      className="rounded border border-zinc-300 bg-white px-1 py-0.5 text-[11px] font-normal hover:bg-zinc-100"
-                    >
-                      ทั้งวัน
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDay(day, false)}
-                      aria-label={`ล้างวัน${DAY_LABELS[day]}`}
-                      className="rounded border border-zinc-300 bg-white px-1 py-0.5 text-[11px] font-normal hover:bg-zinc-100"
-                    >
-                      ล้าง
-                    </button>
-                  </div>
+                  เวลา
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {SLOTS.map((slot) => (
-              <tr key={slot}>
-                <th
-                  scope="row"
-                  className="sticky left-0 z-10 border-b border-r border-zinc-200 bg-zinc-50 px-2 text-xs font-normal tabular-nums text-zinc-700"
-                >
-                  {slotIndexToTimeLabel(slot)}
-                </th>
-                {DAYS.map((day) => {
-                  const key = toSlotKey(day, slot);
-                  const isOn = selected.has(key);
-                  return (
-                    <td key={day} className="border-b border-zinc-100 p-0">
+                {DAYS.map((day) => (
+                  <th
+                    key={day}
+                    scope="col"
+                    className="sticky top-0 z-20 border-b border-line bg-surface-muted px-1 py-2 text-xs font-semibold text-ink"
+                  >
+                    <span aria-hidden="true">{DAY_SHORT_LABELS[day]}</span>
+                    <span className="sr-only">{DAY_LABELS[day]}</span>
+                    <div className="mt-1 flex flex-col items-stretch">
                       <button
                         type="button"
-                        data-slot-key={key}
-                        aria-pressed={isOn}
-                        aria-label={`${DAY_LABELS[day]} ${slotIndexToTimeLabel(slot)}`}
-                        className={`h-8 w-full text-[11px] ${
-                          isOn
-                            ? "bg-emerald-700 font-medium text-white"
-                            : "bg-white text-transparent hover:bg-zinc-100"
-                        }`}
+                        onClick={() => setDay(day, true)}
+                        aria-label={`เลือกทั้งวัน${DAY_LABELS[day]}`}
+                        className={DAY_ACTION_CLASSES}
                       >
-                        {isOn ? "ว่าง" : "-"}
+                        ทั้งวัน
                       </button>
-                    </td>
-                  );
-                })}
+                      <button
+                        type="button"
+                        onClick={() => setDay(day, false)}
+                        aria-label={`ล้างวัน${DAY_LABELS[day]}`}
+                        className={DAY_ACTION_CLASSES}
+                      >
+                        ล้าง
+                      </button>
+                    </div>
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {SLOTS.map((slot) => (
+                <tr key={slot}>
+                  <th
+                    scope="row"
+                    className="sticky left-0 z-10 border-b border-r border-line bg-surface-muted px-2 text-xs font-normal tabular-nums text-ink-muted"
+                  >
+                    {slotIndexToTimeLabel(slot)}
+                  </th>
+                  {DAYS.map((day) => {
+                    const key = toSlotKey(day, slot);
+                    const isOn = selected.has(key);
+                    return (
+                      <td key={day} className="border-b border-r border-white p-0">
+                        <button
+                          type="button"
+                          data-slot-key={key}
+                          aria-pressed={isOn}
+                          aria-label={`${DAY_LABELS[day]} ${slotIndexToTimeLabel(slot)}`}
+                          className={cn(
+                            "flex h-9 w-full items-center justify-center text-xs transition-colors focus-visible:-outline-offset-2 motion-reduce:transition-none md:h-8",
+                            isOn
+                              ? "bg-primary-600 font-medium text-white hover:bg-primary-700"
+                              : "bg-surface text-transparent hover:bg-primary-100",
+                          )}
+                        >
+                          {isOn ? (
+                            <>
+                              <Check className="size-3" aria-hidden="true" />
+                              <span className="sr-only">ว่าง</span>
+                            </>
+                          ) : (
+                            "-"
+                          )}
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
-      <p className="text-xs text-zinc-600">
-        เลือกแล้ว {selected.size} ช่อง ({selected.size / 2} ชั่วโมงต่อสัปดาห์)
-        {dirty && " - มีการเปลี่ยนแปลงที่ยังไม่บันทึก"}
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-muted">
+        <span className="tabular-nums">
+          เลือกแล้ว {selected.size} ช่อง ({selected.size / 2} ชั่วโมงต่อสัปดาห์)
+        </span>
+        {dirty && <Badge tone="warning">มีการเปลี่ยนแปลงที่ยังไม่บันทึก</Badge>}
       </p>
 
-      {state.error && (
-        <p role="alert" className="text-sm text-red-600">
-          {state.error}
-        </p>
-      )}
-      {state.success && !dirty && (
-        <p role="status" className="text-sm text-emerald-800">
-          บันทึกเวลาว่างเรียบร้อยแล้ว
-        </p>
-      )}
-      <div className="sticky bottom-0 -mx-4 border-t border-zinc-200 bg-white/95 px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
-        <PendingButton label="บันทึก" pendingLabel="กำลังบันทึก..." className="w-full sm:w-auto" />
+      <Alert tone="error">{state.error}</Alert>
+      {state.success && !dirty && <Alert tone="success">บันทึกเวลาว่างเรียบร้อยแล้ว</Alert>}
+
+      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 -mx-4 border-t border-line bg-surface/95 px-4 py-3 md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
+        <PendingButton label="บันทึก" pendingLabel="กำลังบันทึก..." className="w-full md:w-auto" />
       </div>
     </form>
   );

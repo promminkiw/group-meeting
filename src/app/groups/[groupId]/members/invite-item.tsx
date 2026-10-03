@@ -1,7 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Ban, Copy } from "lucide-react";
 import { PendingButton } from "@/components/pending-button";
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { revokeInvite, type MemberActionState } from "./actions";
 
 const initialState: MemberActionState = {};
@@ -29,48 +33,43 @@ export function InviteItem({ groupId, inviteId, link, summary, active, statusLab
   }
 
   return (
-    <li className="space-y-2 px-4 py-3">
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span
-          className={`rounded-full px-2 py-0.5 ${active ? "bg-green-100 text-green-800" : "bg-zinc-100 text-zinc-600"}`}
-        >
-          {statusLabel}
-        </span>
-        <span className="text-zinc-600">{summary}</span>
+    <li className="space-y-3 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge tone={active ? "done" : "neutral"}>{statusLabel}</Badge>
+        <span className="text-xs leading-[1.6] text-ink-muted">{summary}</span>
       </div>
+      {/* input อ่านอย่างเดียวเพื่อให้เลือกข้อความทั้งลิงก์ได้ง่าย */}
       <input
         type="text"
         readOnly
         aria-label="ลิงก์เชิญ"
         value={link}
         onFocus={(event) => event.currentTarget.select()}
-        className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm"
+        className="w-full rounded-control bg-surface-muted px-2 py-1 font-mono text-xs"
       />
       {active && (
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={copyLink}
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100"
-          >
+          <Button type="button" variant="ghost" size="sm" icon={Copy} onClick={copyLink}>
             คัดลอกลิงก์
-          </button>
+          </Button>
           <form action={revokeAction}>
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="inviteId" value={inviteId} />
-            <PendingButton label="ยกเลิกลิงก์" pendingLabel="กำลังยกเลิก..." variant="danger" />
+            <PendingButton
+              label="ยกเลิกลิงก์"
+              pendingLabel="กำลังยกเลิก..."
+              variant="danger"
+              size="sm"
+              icon={Ban}
+            />
           </form>
-          <span role="status" className="text-sm text-zinc-600">
+          <span role="status" className="text-sm text-ink-muted">
             {copyStatus === "copied" && "คัดลอกแล้ว"}
             {copyStatus === "failed" && "คัดลอกไม่สำเร็จ กรุณาคัดลอกจากช่องด้านบน"}
           </span>
         </div>
       )}
-      {revokeState.error && (
-        <p role="alert" className="text-sm text-red-600">
-          {revokeState.error}
-        </p>
-      )}
+      <Alert tone="error">{revokeState.error}</Alert>
     </li>
   );
 }
