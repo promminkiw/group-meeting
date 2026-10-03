@@ -1,36 +1,215 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Group Meeting
 
-## Getting Started
+เว็บแอปจัดการงานและนัดเวลาสำหรับกลุ่มนักศึกษาขนาดใหญ่ (ชมรม, กิจกรรมคณะ, หลายสิบคน)
 
-First, run the development server:
+## ปัญหาที่แก้
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+กลุ่มใหญ่ที่ใช้ LINE กลุ่มทำงานร่วมกันเจอ 2 เรื่อง
+
+1. **ตามงานยาก** ข้อความจม ไม่รู้ว่าใครค้างอะไร
+2. **นัดเวลาไม่ลงตัว** หาเวลาว่างตรงกันไม่ได้ และในกลุ่มใหญ่แทบไม่มีเวลาที่ทุกคนว่างพอดี
+
+แนวทาง: ใช้ความโปร่งใสของสถานะแทนระบบเตือนอัตโนมัติ (dashboard เห็นทันทีว่าใครค้างอะไร) และใช้ heatmap
+แทนการหาเวลาที่ทุกคนว่าง (เห็นว่าช่วงไหนมีคนว่างกี่คน แล้วให้ admin เลือกเอง)
+
+## ฟีเจอร์
+
+- **กลุ่มและสิทธิ์:** 1 user อยู่ได้หลายกลุ่ม, 2 บทบาท (admin / member), เชิญด้วยลิงก์หรือโค้ด
+  (กำหนดจำนวนครั้งและวันหมดอายุได้), เปลี่ยน role, ลบสมาชิก, ออกจากกลุ่ม, ลบกลุ่ม
+- **งาน:** admin สร้างงานพร้อม deadline และมอบหมายได้หลายคน, member อัปเดตสถานะของตัวเอง
+  (todo / doing / done), dashboard "ใครค้างอะไร", filter ตามคน/สถานะ/deadline และ pagination
+- **ปฏิทินกลาง:** กรอกเวลาว่างประจำสัปดาห์ครั้งเดียว (ช่องละ 30 นาที) ใช้ได้ทุกกลุ่ม,
+  heatmap จำนวนคนว่างต่อช่วงเวลา, กดช่องดูรายชื่อว่าง/ไม่ว่าง, admin สร้างนัดหมายจากช่องที่เลือก
+- **Auth:** email + password และ Google ผ่าน Supabase Auth
+
+## Tech stack
+
+| ส่วน | เทคโนโลยี |
+|---|---|
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
+| Styling | Tailwind CSS 4 |
+| Backend | Supabase (PostgreSQL, Auth, Row Level Security) |
+| Test | Vitest |
+| Deploy | Vercel |
+
+## สถาปัตยกรรมและการตัดสินใจสำคัญ
+
+### 1. บังคับสิทธิ์ 3 ชั้น
+
+| ชั้น | หน้าที่ | ที่อยู่ |
+|---|---|---|
+| `proxy.ts` | ต่ออายุ session และ redirect แบบ optimistic (UX) | `src/proxy.ts` |
+| DAL / Server Actions | ตรวจ session และสิทธิ์ก่อนอ่านหรือเขียนข้อมูลทุกครั้ง | `src/lib/auth/dal.ts`, `src/lib/groups/dal.ts`, `src/lib/permissions` |
+| Row Level Security | ด่านสุดท้ายที่ database ต่อให้ข้ามแอปก็ผ่านไม่ได้ | `supabase/migrations` |
+
+เหตุผล: เอกสาร Next.js ระบุว่า proxy ไม่ควรเป็นแนวป้องกันเดียว การซ่อนปุ่มใน UI ไม่ใช่ความปลอดภัย
+เพราะใครก็ยิง API ตรงๆ ได้ จึงต้องมี RLS ที่ database และมี test ยืนยัน
+
+### 2. การเข้ากลุ่มผ่าน function ไม่ใช่ INSERT ตรง
+
+ไม่มี policy INSERT บน `groups` และ `memberships` การสร้างกลุ่มและเข้ากลุ่มทำผ่าน
+`create_group()` และ `join_group(code)` (`SECURITY DEFINER`) ที่ตรวจโค้ด, วันหมดอายุ, จำนวนครั้ง
+และใส่ role เป็น `member` เท่านั้น ถ้าเปิด INSERT ตรง ใครก็ใส่ตัวเองเป็น admin ได้
+
+### 3. สถานะงานเก็บรายคน (`task_assignees.status`)
+
+งานที่มอบหมายหลายคนเสร็จไม่พร้อมกัน ถ้าเก็บสถานะที่ตัวงานตัวเดียวจะตอบไม่ได้ว่าใครค้าง
+สถานะรวมของงานคำนวณจากสถานะของทุกคน และ "เลยกำหนด" คำนวณตอน query ไม่เก็บใน database
+(ไม่ต้องมีงานคอยอัปเดต ซึ่งสอดคล้องกับการไม่มีระบบอัตโนมัติ)
+
+### 4. เวลาว่างผูกกับ user ไม่ผูกกับกลุ่ม
+
+กรอกครั้งเดียวใช้ได้ทุกกลุ่มที่อยู่ เก็บเป็น 1 แถวต่อ 1 ช่อง 30 นาที `(user_id, day_of_week, slot_index)`
+เพราะ query และอธิบายง่ายกว่า bitmask และข้อมูลระดับกลุ่มหลักสิบคนมีไม่เกินหลักหมื่นแถว
+`day_of_week` นับ 0 = จันทร์ (ไม่ใช่ `Date.getDay()` ที่ 0 = อาทิตย์) และเขตเวลาตายตัวเป็น `Asia/Bangkok`
+
+### 5. Heatmap เป็น pure function
+
+`src/lib/availability/heatmap.ts` รับแถวเวลาว่างกับรายชื่อสมาชิก กรองคนนอกกลุ่ม ค่านอกช่วง และแถวซ้ำ
+แล้วนับลงกริด 7x48 ในรอบเดียว ทดสอบได้โดยไม่ต้องมี database
+
+### 6. Server Components เป็นค่าเริ่มต้น
+
+ดึงข้อมูลและตรวจสิทธิ์ฝั่ง server ใช้ Client Component เฉพาะที่ต้องมี state หรือ event จริง
+(กริดกรอกเวลา, heatmap ที่กดได้, ฟอร์มที่ใช้ `useActionState`) ตัวกรองรายการงานเป็นฟอร์ม GET
+ที่เก็บค่าใน URL จึงแชร์ลิงก์ได้และไม่ต้องมี client state
+
+### 7. Trigger ปกป้องกฎที่ RLS ทำเองไม่ได้
+
+RLS ตอบได้แค่ "แถวไหนแก้ได้" ไม่ใช่ "แก้เป็นค่าอะไร" จึงใช้ trigger กัน admin คนสุดท้ายหายไป,
+กันย้ายแถว membership ข้ามกลุ่ม, ตรวจว่าผู้รับงานเป็นสมาชิกกลุ่ม และใช้ column-level privilege
+(`grant update (status)`) จำกัดคอลัมน์ที่แก้ได้
+
+## ER diagram
+
+```mermaid
+erDiagram
+    profiles ||--o{ memberships : "มี"
+    groups ||--o{ memberships : "มี"
+    groups ||--o{ invites : "มี"
+    groups ||--o{ tasks : "มี"
+    groups ||--o{ events : "มี"
+    tasks ||--o{ task_assignees : "มอบหมาย"
+    profiles ||--o{ task_assignees : "รับงาน"
+    profiles ||--o{ availability_slots : "กรอก"
+
+    profiles {
+        uuid id PK "= auth.users.id"
+        text display_name
+        text avatar_url
+    }
+    groups {
+        uuid id PK
+        text name
+        uuid created_by FK
+    }
+    memberships {
+        uuid group_id PK,FK
+        uuid user_id PK,FK
+        member_role role "admin | member"
+    }
+    invites {
+        uuid id PK
+        uuid group_id FK
+        text code UK
+        timestamptz expires_at
+        int max_uses
+        int use_count
+        timestamptz revoked_at
+    }
+    tasks {
+        uuid id PK
+        uuid group_id FK
+        text title
+        timestamptz deadline
+    }
+    task_assignees {
+        uuid task_id PK,FK
+        uuid user_id PK,FK
+        task_status status "todo | doing | done"
+    }
+    availability_slots {
+        uuid user_id PK,FK
+        smallint day_of_week PK "0=จันทร์"
+        smallint slot_index PK "0-47"
+    }
+    events {
+        uuid id PK
+        uuid group_id FK
+        text title
+        timestamptz starts_at
+        timestamptz ends_at
+    }
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## สิทธิ์ (สรุป)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| การกระทำ | admin | member |
+|---|---|---|
+| ดูกลุ่ม งาน และปฏิทิน | ใช่ | ใช่ |
+| สร้างและมอบหมายงาน | ใช่ | ไม่ |
+| อัปเดตสถานะงานของตัวเอง | ใช่ (ถ้าเป็นผู้รับงาน) | ใช่ |
+| เชิญสมาชิก / จัดการ role / ลบสมาชิก | ใช่ | ไม่ |
+| กรอกเวลาว่างของตัวเอง | ใช่ | ใช่ |
+| สร้างนัดหมาย | ใช่ | ไม่ |
+| ลบกลุ่ม | ใช่ | ไม่ |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+ตารางนี้ตรงกับ `src/lib/permissions` (มี test ครบทุกคู่ role x action) และกับนโยบาย RLS
 
-## Learn More
+## วิธีรันในเครื่อง
 
-To learn more about Next.js, take a look at the following resources:
+ต้องมี Node.js 22 ขึ้นไป
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. ติดตั้ง dependency: `npm install`
+2. สร้างโปรเจกต์ที่ https://supabase.com (region Southeast Asia - Singapore)
+3. เปิด SQL Editor แล้วรันไฟล์ใน `supabase/migrations` ตามลำดับเลขทีละไฟล์ (000001 ถึง 000005)
+4. สร้างไฟล์ `.env.local` จาก `.env.example` แล้วใส่ค่า Project URL และ publishable (anon) key
+   จาก Project Settings > API Keys (ห้ามใช้ `service_role` key ในแอปนี้)
+5. ที่ Supabase > Authentication > URL Configuration ตั้ง Site URL เป็น `http://localhost:3000`
+   และเพิ่ม Redirect URL `http://localhost:3000/**`
+6. (ตอนพัฒนา) ปิด Confirm email ที่ Authentication > Sign In / Providers > Email
+7. (ถ้าต้องการ Google) เปิด provider Google และตั้ง OAuth client ใน Google Cloud Console
+8. `npm run dev` แล้วเปิด http://localhost:3000
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Test
 
-## Deploy on Vercel
+```bash
+npm test                  # unit test (Vitest)
+npm run lint
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Unit test ครอบคลุม logic หลัก: heatmap, การเช็คสิทธิ์ (`can`, `isLastAdmin`), filter/deadline/workload
+  ของงาน, การแปลง slot เป็นเวลาจริง, การกัน open redirect
+- ทดสอบ RLS กับ database จริง: วาง `supabase/tests/rls_smoke.sql` ใน Supabase SQL Editor
+  สคริปต์ทำงานใน transaction เดียวแล้ว rollback จึงไม่ทิ้งข้อมูล
+  กรณี race ของ admin คนสุดท้ายที่ลดสิทธิ์พร้อมกัน ทดสอบอัตโนมัติไม่ได้ ดูขั้นตอนทำมือท้ายไฟล์
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+หมายเหตุ: ถ้ารัน `tsc` ก่อน `next build` ครั้งแรกอาจฟ้อง type `PageProps` เพราะ route types ยังไม่ถูกสร้าง
+ให้รัน `npx next typegen` หรือ build ก่อน
+
+## Deploy บน Vercel
+
+1. push โค้ดขึ้น GitHub แล้ว import โปรเจกต์ใน Vercel
+2. ตั้ง Environment Variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   และ `SITE_URL` (origin ของเว็บจริง เช่น `https://your-app.vercel.app`)
+3. ที่ Supabase เพิ่ม Site URL และ Redirect URL ของโดเมนจริง (`https://your-app.vercel.app/**`)
+4. **เปิด Confirm email กลับ** ที่ Authentication > Sign In / Providers > Email
+5. ตั้ง redirect URI ของ Google OAuth ให้ตรงกับโปรเจกต์ Supabase
+
+## ข้อจำกัดที่รู้อยู่แล้ว
+
+- **ไม่รองรับการลบบัญชีผู้ใช้:** FK `created_by` ของ `groups`/`invites`/`tasks` ไม่มี `on delete` ต้องตัดสินนโยบายเจ้าของข้อมูลก่อน
+- **admin ทุกคนมีสิทธิ์เท่ากัน:** admin คนไหนก็ลด/ลบ admin คนอื่นได้ (กันกลุ่มไม่มี admin ด้วย trigger)
+- **การสร้างงานพร้อมผู้รับผิดชอบ และการบันทึกเวลาว่าง ไม่ใช่ transaction เดียว:** ทำจากฝั่งแอป
+  หากต้องการ atomic จริงควรเพิ่ม RPC ใน database
+- **Dashboard คำนวณใน JavaScript:** ดึงข้อมูลเป็นก้อน (เพดาน 10,000 แถวการมอบหมาย พร้อมคำเตือน)
+  กลุ่มที่ใหญ่กว่านี้ควรย้ายไปคำนวณใน database ด้วย view หรือ RPC
+- **ไม่มี rate limit ต่อการเดาโค้ดเชิญ:** โค้ดสุ่มยาว 12 ตัว (~48 บิต) และตอบ error เดียวกันทุกกรณี
+- **เขตเวลาคงที่ Asia/Bangkok** ไม่รองรับกลุ่มต่างเขตเวลา
+- **ไม่ทำ (ตามขอบเขต):** LINE ทุกรูปแบบ, ระบบเตือนอัตโนมัติ (email/push), ทีมย่อยในกลุ่ม, แอปมือถือ
+
+## Screenshot
+
+ยังไม่ได้เพิ่ม (ต้องถ่ายจากแอปที่รันกับ Supabase จริง) ควรมีอย่างน้อย: dashboard "ใครค้างอะไร",
+รายการงานพร้อม filter, heatmap ปฏิทินกลาง, หน้ากรอกเวลาว่าง และมุมมองบนมือถือ
