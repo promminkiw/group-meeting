@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/field";
+import { PasswordInput } from "@/components/ui/password-input";
+import { MIN_LOGIN_PASSWORD_LENGTH } from "@/lib/auth/password";
 import { signInWithPassword, type AuthState } from "./actions";
 import { SubmitButton } from "./submit-button";
 
@@ -22,13 +24,12 @@ export function LoginForm({ next }: { next: string }) {
         required
         defaultValue={state.values?.email}
       />
-      <Input
+      <PasswordInput
         label="รหัสผ่าน"
         name="password"
-        type="password"
         autoComplete="current-password"
         required
-        minLength={6}
+        minLength={MIN_LOGIN_PASSWORD_LENGTH}
       />
       <Alert tone="error">{state.error}</Alert>
       <SubmitButton label="เข้าสู่ระบบ" pendingLabel="กำลังเข้าสู่ระบบ..." />

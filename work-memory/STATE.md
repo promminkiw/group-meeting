@@ -15,6 +15,7 @@ Goal: เว็บแอปจัดการงานและนัดเว�
 - [ ] อธิบายแนวคิดที่ยังไม่ได้สอนก่อนทำ (Server vs Client Components, กริดเวลา, slot -> เวลาจริง)
 
 ## Done
+- [x] 2026-10-04 ฟอร์มสมัคร: ช่องยืนยันรหัสผ่าน (เตือนตอนกดสมัคร + server ตรวจซ้ำ), ปุ่มตาทุกช่องรหัสผ่าน (components/ui/password-input.tsx), ค่าคงที่ใน lib/auth/password.ts; tsc/lint/232 test/build ผ่าน; ตรวจในเบราว์เซอร์เดสก์ท็อปแล้ว (ปุ่มตาสลับ type + aria-label, เตือนไม่ตรงไม่ส่งฟอร์ม, ข้อความหายเมื่อแก้, login มีปุ่มตา, ไม่มี console error) ยังไม่ได้ตรวจ 375px; ยังไม่ commit
 - [x] เฟส 0 scaffold (commit 17946cd)
 - [x] เฟส 1 migrations 000001-000005 + rls_smoke.sql รันบน Supabase แล้ว 77 pass
 - [x] เฟส 2 auth (email); ทดสอบ login จริงผ่าน
@@ -58,3 +59,4 @@ Goal: เว็บแอปจัดการงานและนัดเว�
 - Supabase ส่งลิงก์ยืนยันอีเมลไปที่ Site URL (เพราะ signUp ไม่ส่ง emailRedirectTo) ถ้าเปลี่ยนโดเมนต้องแก้ Site URL ด้วย; Google Cloud ไม่ต้องแก้เมื่อเปลี่ยนโดเมน เพราะ redirect ไปที่ Supabase
 - frame-ancestors 'none' + X-Frame-Options DENY ทำให้วิธีตรวจ 375px ด้วย iframe ใช้ไม่ได้แล้ว (บล็อกแม้ origin เดียวกัน) ต้องหาวิธีอื่น เช่น DevTools device mode
 - form-action 'self' ใน CSP บล็อก redirect หลัง submit ฟอร์มไปโดเมนอื่น (Google OAuth ผ่าน server action) อย่าใส่ถ้าไม่เพิ่มโดเมน Supabase
+- ดูหน้าแบบยังไม่ login ด้วย fetch(credentials omit) + document.write แสดงผลได้แต่ React ไม่ hydrate กดอะไรไม่ได้ ต้องให้ผู้ใช้ logout

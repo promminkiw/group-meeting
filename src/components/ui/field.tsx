@@ -16,13 +16,13 @@ type BaseFieldProps = {
   required?: boolean;
 };
 
-const CONTROL_CLASSES =
+export const CONTROL_CLASSES =
   "w-full rounded-control border border-line-strong bg-surface px-3 text-base text-ink transition-colors placeholder:text-ink-subtle hover:border-ink-subtle focus-visible:border-primary-600 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary-600/30 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-ink-subtle disabled:hover:border-line-strong md:text-sm motion-reduce:transition-none";
 
-const INVALID_CLASSES =
+export const INVALID_CLASSES =
   "border-danger-solid hover:border-danger-solid focus-visible:border-danger-solid";
 
-function useFieldIds(
+export function useFieldIds(
   idProp: string | undefined,
   helper: string | undefined,
   error: string | undefined,
@@ -34,7 +34,7 @@ function useFieldIds(
   return { id, messageId, describedBy };
 }
 
-function FieldLabel({ id, label, required }: { id: string; label: string; required?: boolean }) {
+export function FieldLabel({ id, label, required }: { id: string; label: string; required?: boolean }) {
   return (
     <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-ink">
       {label}
@@ -43,7 +43,7 @@ function FieldLabel({ id, label, required }: { id: string; label: string; requir
   );
 }
 
-function FieldMessage({
+export function FieldMessage({
   messageId,
   helper,
   error,

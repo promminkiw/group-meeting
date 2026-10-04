@@ -3,6 +3,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeNextPath } from "@/lib/auth/paths";
+import {
+  MIN_LOGIN_PASSWORD_LENGTH,
+  MIN_SIGNUP_PASSWORD_LENGTH,
+  PASSWORD_MISMATCH_MESSAGE,
+} from "@/lib/auth/password";
 import { getRequestOrigin } from "@/lib/request-origin";
 
 export type AuthState = {
@@ -12,9 +17,6 @@ export type AuthState = {
   needsEmailConfirmation?: boolean;
 };
 
-// สมัครใหม่ต้อง 8 ตัวขึ้นไป แต่ login ยังรับ 6 เพราะบัญชีเดิมอาจตั้งไว้ 6-7 ตัว
-const MIN_SIGNUP_PASSWORD_LENGTH = 8;
-const MIN_LOGIN_PASSWORD_LENGTH = 6;
 const MAX_DISPLAY_NAME_LENGTH = 80;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -69,6 +71,9 @@ export async function signUpWithPassword(
   }
   const validationError = validateCredentials(email, password, MIN_SIGNUP_PASSWORD_LENGTH);
   if (validationError) return { error: validationError, values };
+  if (password !== readText(formData, "confirmPassword")) {
+    return { error: PASSWORD_MISMATCH_MESSAGE, values };
+  }
 
   // ให้ลิงก์ยืนยันอีเมลผ่าน callback เพื่อ login ให้เลยและพากลับไปที่ next (เช่นลิงก์เชิญ)
   const origin = await getRequestOrigin();
