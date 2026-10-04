@@ -80,7 +80,8 @@ export const getUpcomingEvents = cache(async (groupId: string): Promise<EventRow
     .from("events")
     .select(EVENT_COLUMNS)
     .eq("group_id", groupId)
-    .gte("starts_at", new Date().toISOString())
+    // กรองด้วยเวลาจบ เพื่อให้นัดที่กำลังประชุมอยู่ยังแสดงและลบได้
+    .gt("ends_at", new Date().toISOString())
     .order("starts_at", { ascending: true })
     .limit(UPCOMING_EVENTS_LIMIT);
 

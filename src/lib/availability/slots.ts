@@ -52,6 +52,16 @@ export function nextOccurrenceDate(dayOfWeek: number, from: Date): string | null
   return formatUtcDate(from.getTime() + BANGKOK_OFFSET_MS + daysAhead * DAY_MS);
 }
 
+// วันที่ถัดไปที่ช่องนี้ยังไม่จบ: ถ้าช่องของวันนี้จบไปแล้วเลื่อนไปสัปดาห์หน้า (ตรงกับเงื่อนไขของ createEvent)
+export function nextSlotDate(dayOfWeek: number, slotIndex: number, from: Date): string | null {
+  const date = nextOccurrenceDate(dayOfWeek, from);
+  if (date === null) return null;
+  const slotEnd = slotToIso(date, slotIndex + 1);
+  if (slotEnd === null) return null;
+  if (Date.parse(slotEnd) > from.getTime()) return date;
+  return formatUtcDate((parseDateString(date) as number) + DAYS_PER_WEEK * DAY_MS);
+}
+
 // boundaryIndex 0-48: ต้นช่อง = index ของช่องนั้น, ปลายช่อง = index + 1 (48 = 24:00 คือเที่ยงคืนวันถัดไป)
 export function slotToIso(dateString: string, boundaryIndex: number): string | null {
   if (!Number.isInteger(boundaryIndex) || boundaryIndex < 0 || boundaryIndex > SLOTS_PER_DAY) {

@@ -3,9 +3,14 @@ Updated: 2026-10-04
 Goal: เว็บแอปจัดการงานและนัดเวลาสำหรับกลุ่มนักศึกษา ใช้งานได้จริงและ deploy บน Vercel (portfolio)
 
 ## Next
-- [ ] `next` commit screenshot + seed + README (ผู้ใช้จะ commit เอง)
-- [ ] deploy Vercel (ตั้ง SITE_URL, เพิ่ม https://<โดเมน vercel>/** ใน Supabase Redirect URLs, เปิด Confirm email กลับ, Google consent ยังเป็น Testing: login ได้เฉพาะ Test users จนกว่าจะ Publish app)
-- [ ] ตัดสินใจเรื่อง push: repo GitHub origin (promminkiw/group-meeting) ว่างเปล่า ไม่มี branch เลย, main ในเครื่องยังผูก upstream origin/main ที่หายไปแล้ว (Vercel ต้องใช้ repo บน GitHub)
+- [ ] `next` ผู้ใช้ทำต่อจากการแก้ผลรีวิว (โค้ดแก้แล้ว ยังไม่ commit):
+  - รัน supabase/migrations/20261004000006_hardening.sql ใน SQL Editor แล้วรัน supabase/tests/rls_smoke.sql ต้องได้ 0 FAILED (SQL ยังไม่เคยรันจริง ตรวจในเครื่องไม่ได้)
+  - Supabase dashboard: Minimum password length 8, Leaked password protection, ดู Rate Limits
+  - commit + push แล้ว curl -I เว็บจริงดูว่ามี X-Frame-Options / CSP frame-ancestors / Referrer-Policy และไม่มี X-Powered-By
+  - ลบ .next ก่อน npm run dev ครั้งถัดไป (รัน build ไปแล้ว)
+  - ทดสอบบนเว็บจริง: สมัครอีเมลจากลิงก์เชิญ -> ยืนยัน -> ควร login ให้และกลับไปหน้า join
+- [ ] เก็บกวาดบัญชีทดสอบใน Supabase จริง: Admin, User, กลุ่ม "ชมรมทดสอบ", บัญชี Google ที่สร้างตอนทดสอบ OAuth, บัญชีอีเมลที่สมัครทดสอบบน Vercel (B4) ระวังอย่าลบ Kariwqq ที่เป็นเจ้าของข้อมูล demo (ทำหลังรัน migration 000006 เพราะก่อนหน้านั้นลบบัญชีที่สร้างกลุ่มไม่ได้)
+- [ ] เลื่อนไว้จากรีวิว: app rate limit login/signup (ต้องใช้บริการภายนอก), CSP เต็ม (form-action 'self' จะบล็อก redirect ไป Google), จำกัดจำนวนกลุ่มต่อ user, task_assignees race, ban list หลัง kick, task_group_id เป็น RPC, RLS ต่อแถวช้า (ต้องวัด), ความหมาย status filter
 - [ ] ตัดสินใจเรื่อง RPC: dashboard aggregate ใน DB, createTask/saveAvailability แบบ atomic, getClaims() ใน proxy
 - [ ] อธิบายแนวคิดที่ยังไม่ได้สอนก่อนทำ (Server vs Client Components, กริดเวลา, slot -> เวลาจริง)
 
@@ -27,10 +32,15 @@ Goal: เว็บแอปจัดการงานและนัดเว�
 - [x] 2026-10-04 สร้าง src/app/not-found.tsx (commit d8785d1)
 - [x] 2026-10-04 seed ข้อมูลตัวอย่าง supabase/seed/demo_data.sql (ผู้ใช้รันแล้ว; หาเจ้าของจาก auth.identities provider google = Kariwqq) + demo_cleanup.sql
 - [x] 2026-10-04 screenshot 5 ภาพใน docs/screenshots (dashboard, tasks, calendar-heatmap, availability, mobile) + README ส่วน Screenshot; ล้างเวลาว่างเดิมของ Kariwqq (ส-อา ทั้งวัน) แล้วใส่ชุดของ seed 58 ช่อง ถ่าย availability + heatmap ใหม่
+- [x] 2026-10-04 commit 82e7a8d (seed + screenshot + README), 5e23f96 (STATE)
+- [x] 2026-10-04 push ขึ้น GitHub แล้ว (git push -u origin main) repo promminkiw/group-meeting เป็น Public; ตรวจแล้วไม่มี .env หรือ secret ใน history
 - [x] 2026-10-04 build ผ่าน (Next 16.3.8, 13 route), 227 test ผ่าน, lint ไม่มี error
+- [x] 2026-10-04 เพิ่มลิงก์เว็บจริงบนสุดของ README (ยังไม่ commit)
+- [x] 2026-10-04 รีวิว falcon + viper (ไม่มี Critical) แล้วแก้ A/B/C (ยังไม่ commit): demo_cleanup ลบเฉพาะเจ้าของ demo, security headers + poweredByHeader false, นัดกรองด้วย ends_at, key={view} ที่ heatmap, nextSlotDate (+test 5 ข้อ), proxy คง next, signUp emailRedirectTo ผ่าน /auth/callback, รหัสผ่านสมัคร 8 (login ยังรับ 6), migration 000006 (check ความยาว, avatar https, created_by on delete set null, ลบบัญชี admin คนเดียว = ลบกลุ่ม ตามที่ผู้ใช้เลือก), rls_smoke ส่วน 11, README; tsc/lint/232 test/build ผ่าน
+- [x] 2026-10-04 deploy Vercel เสร็จ: https://group-meeting-mauve.vercel.app ตั้ง env 3 ตัว (Supabase URL/anon key, SITE_URL), Supabase Site URL + Redirect URL vercel/** + Confirm email เปิด, Google app Publish (In production); ผู้ใช้ทดสอบ login Google + สมัคร/ยืนยันอีเมล + หน้าหลักบน URL จริงผ่าน
 
 ## Blocked
-- ไม่มี screenshot: ต้องถ่ายจากแอปจริง
+- ไม่มี
 
 ## Learned
 - รัน `next build` แล้วค่อยเปิด `next dev` ก็ยังทำให้บาง route 404 ได้ (เจอ 2026-10-04) ควรลบ .next หลัง build ทุกครั้งก่อน dev
@@ -39,11 +49,12 @@ Goal: เว็บแอปจัดการงานและนัดเว�
 - ห้ามสร้างบัญชี/กรอกรหัสผ่านผ่านเครื่องมือเบราว์เซอร์ที่ต่อ Supabase คลาวด์ ผู้ใช้ต้องสมัครบัญชีทดสอบเอง
 - ห้ามส่งฟังก์ชัน/ไอคอน (component) เป็น prop จาก Server Component ไป Client Component: พังตอน runtime แต่ tsc/lint/test จับไม่ได้ ต้องเปิดหน้าจริงตรวจ
 - form_input ติ๊ก checkbox ไม่อัปเดต React state ใช้ left_click แทน
-- บัญชีทดสอบ (Admin, User) และกลุ่ม "ชมรมทดสอบ" อยู่ใน Supabase จริง ควรลบหลังเสร็จ
 - resize_window ของ Chrome ย่อ viewport ไม่ได้ (ยัง 1536px) ใช้วิธีแทนหน้า localhost ด้วย iframe กว้าง 375px ผ่าน javascript_tool ได้ผล
 - ดูหน้าแบบยังไม่ login ได้โดยไม่ต้อง logout: iframe ที่มี attribute credentialless ไม่ส่ง cookie
-- บัญชี Google ที่ใช้ทดสอบ OAuth ถูกสร้างเป็น user ใหม่ใน Supabase ด้วย ควรพิจารณาลบตอนเก็บกวาดข้อมูลทดสอบ
 - raw_app_meta_data.provider เก็บแค่ provider แรกที่สมัคร บัญชีอีเมลที่ผูก Google ภายหลังยังเป็น email ต้องดู auth.identities
 - ถ่าย screenshot: จอ Chrome สูงแค่ 639px ใช้ document.documentElement.style.zoom='0.8' + zoom region [340,0,1180,639] save_to_disk ได้ภาพ 1050x799; ซ่อน dev indicator ด้วย nextjs-portal{display:none}
 - SQL Editor ของ Supabase อาจมีข้อความค้างในช่อง ทำให้ syntax error (บรรทัดไม่ตรง) ให้ผู้ใช้ Ctrl+A ลบก่อนวาง
 - หลัง navigate คำสั่ง scroll ครั้งแรกอาจถูก reset (hydration) ให้สั่ง scroll ซ้ำในคำสั่งแยกก่อนถ่าย
+- Supabase ส่งลิงก์ยืนยันอีเมลไปที่ Site URL (เพราะ signUp ไม่ส่ง emailRedirectTo) ถ้าเปลี่ยนโดเมนต้องแก้ Site URL ด้วย; Google Cloud ไม่ต้องแก้เมื่อเปลี่ยนโดเมน เพราะ redirect ไปที่ Supabase
+- frame-ancestors 'none' + X-Frame-Options DENY ทำให้วิธีตรวจ 375px ด้วย iframe ใช้ไม่ได้แล้ว (บล็อกแม้ origin เดียวกัน) ต้องหาวิธีอื่น เช่น DevTools device mode
+- form-action 'self' ใน CSP บล็อก redirect หลัง submit ฟอร์มไปโดเมนอื่น (Google OAuth ผ่าน server action) อย่าใส่ถ้าไม่เพิ่มโดเมน Supabase

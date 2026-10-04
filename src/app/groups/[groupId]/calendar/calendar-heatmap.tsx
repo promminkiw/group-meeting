@@ -19,6 +19,7 @@ import {
   slotIndexToTimeLabel,
   type AvailabilitySlot,
 } from "@/lib/availability/heatmap";
+import { nextSlotDate } from "@/lib/availability/slots";
 import { cn } from "@/lib/cn";
 import { CreateEventForm } from "./create-event-form";
 
@@ -33,12 +34,11 @@ type Props = {
   members: MemberOption[];
   startSlot: number;
   endSlot: number;
-  // วันที่ถัดไปของแต่ละ weekday คำนวณฝั่ง server เพื่อไม่ให้ขึ้นกับ timezone ของเบราว์เซอร์
-  nextDates: (string | null)[];
   canCreateEvent: boolean;
 };
 
-type Selection = { day: number; slot: number };
+// defaultDate คำนวณตอนคลิก ไม่ใช่ตอน render เพื่อใช้เวลาปัจจุบันจริง (ฟังก์ชันคิดตามเวลาไทย ไม่ขึ้นกับ timezone ของเบราว์เซอร์)
+type Selection = { day: number; slot: number; defaultDate: string };
 
 export function CalendarHeatmap({
   groupId,
@@ -47,7 +47,6 @@ export function CalendarHeatmap({
   members,
   startSlot,
   endSlot,
-  nextDates,
   canCreateEvent,
 }: Props) {
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -109,7 +108,9 @@ export function CalendarHeatmap({
                       <td key={day} className="border-b border-r border-white p-0">
                         <button
                           type="button"
-                          onClick={() => setSelection({ day, slot })}
+                          onClick={() =>
+                            setSelection({ day, slot, defaultDate: nextSlotDate(day, slot, new Date()) ?? "" })
+                          }
                           aria-pressed={isSelected}
                           aria-label={`${DAY_LABELS[day]} ${slotRangeLabel(slot, slot + 1)} ว่าง ${count} จาก ${members.length} คน`}
                           className={cn(
@@ -184,7 +185,7 @@ export function CalendarHeatmap({
                 groupId={groupId}
                 dayOfWeek={selection.day}
                 startSlot={selection.slot}
-                defaultDate={nextDates[selection.day] ?? ""}
+                defaultDate={selection.defaultDate}
               />
             )}
           </Card>

@@ -44,6 +44,8 @@ language sql immutable as $fn$
     when 'edge_no_email'   then 'e5555555-5555-4555-8555-555555555555'
     when 'edge_long_name'  then 'e6666666-6666-4666-8666-666666666666'
     when 'edge_at_email'   then 'e7777777-7777-4777-8777-777777777777'
+    when 'del_admin'       then 'f8888888-8888-4888-8888-888888888888'
+    when 'del_other'       then 'f9999999-9999-4999-8999-999999999999'
   end::uuid;
 $fn$;
 
@@ -439,6 +441,76 @@ select rls_test.expect_rows('10: long metadata name truncated to 80 chars',
   $q$select 1 from public.profiles where id = rls_test.u('edge_long_name') and char_length(display_name) = 80$q$, 1);
 select rls_test.expect_rows('10: profile exists for email starting with @ (fallback name)',
   $q$select 1 from public.profiles where id = rls_test.u('edge_at_email') and display_name = 'user'$q$, 1);
+
+-- ===== 11. ความยาวข้อความ, avatar_url, การลบบัญชี (migration 000006) =====
+select rls_test.as_postgres();
+select rls_test.expect_affected('11: insert user with non-https avatar_url in metadata',
+  $q$insert into auth.users (id, aud, role, email, raw_user_meta_data) values
+     (rls_test.u('del_admin'), 'authenticated', 'authenticated', 'deladmin@example.test',
+      '{"full_name":"DelAdmin","avatar_url":"javascript:alert(1)"}'),
+     (rls_test.u('del_other'), 'authenticated', 'authenticated', 'delother@example.test',
+      '{"full_name":"DelOther","avatar_url":"https://lh3.googleusercontent.com/a/x"}')$q$, 2);
+select rls_test.expect_rows('11: non-https avatar_url dropped to null',
+  $q$select 1 from public.profiles where id = rls_test.u('del_admin') and avatar_url is null$q$, 1);
+select rls_test.expect_rows('11: https avatar_url kept',
+  $q$select 1 from public.profiles where id = rls_test.u('del_other') and avatar_url is not null$q$, 1);
+
+select rls_test.as_user('del_other');
+select rls_test.expect_error('11: user cannot set non-https avatar_url',
+  $q$update public.profiles set avatar_url = 'http://tracker.example/x.png' where id = auth.uid()$q$,
+  '%profiles_avatar_url_https%');
+select rls_test.expect_error('11: create_group rejects 501-char description',
+  $q$select public.create_group('Too long', repeat('a', 501))$q$, '%groups_description_length%');
+
+-- setup: g_solo มี del_admin เป็น admin คนเดียว, g_kept มี admin 2 คน
+select rls_test.as_postgres();
+insert into rls_test.ctx values
+  ('g_solo', gen_random_uuid()::text),
+  ('g_kept', gen_random_uuid()::text);
+insert into public.groups (id, name, created_by) values
+  (rls_test.v('g_solo'), 'Solo', rls_test.u('del_admin')),
+  (rls_test.v('g_kept'), 'Kept', rls_test.u('del_admin'));
+insert into public.memberships (group_id, user_id, role) values
+  (rls_test.v('g_solo'), rls_test.u('del_admin'), 'admin'),
+  (rls_test.v('g_solo'), rls_test.u('del_other'), 'member'),
+  (rls_test.v('g_kept'), rls_test.u('del_admin'), 'admin'),
+  (rls_test.v('g_kept'), rls_test.u('del_other'), 'admin');
+insert into public.tasks (group_id, title, created_by) values
+  (rls_test.v('g_kept'), 'Kept task', rls_test.u('del_admin'));
+insert into public.events (group_id, title, starts_at, ends_at, created_by) values
+  (rls_test.v('g_kept'), 'Kept event', now() + interval '1 day', now() + interval '1 day 1 hour', rls_test.u('del_admin'));
+insert into public.invites (group_id, created_by) values
+  (rls_test.v('g_kept'), rls_test.u('del_admin'));
+
+select rls_test.expect_error('11: task description over 2000 chars rejected',
+  $q$insert into public.tasks (group_id, title, description, created_by)
+     values (rls_test.v('g_kept'), 'x', repeat('a', 2001), rls_test.u('del_other'))$q$, '%tasks_description_length%');
+select rls_test.expect_error('11: event description over 2000 chars rejected',
+  $q$insert into public.events (group_id, title, description, starts_at, ends_at, created_by)
+     values (rls_test.v('g_kept'), 'x', repeat('a', 2001), now(), now() + interval '1 hour', rls_test.u('del_other'))$q$,
+  '%events_description_length%');
+select rls_test.expect_error('11: invite code over 64 chars rejected',
+  $q$insert into public.invites (group_id, code, created_by)
+     values (rls_test.v('g_kept'), repeat('a', 65), rls_test.u('del_other'))$q$, '%invites_code_max_length%');
+
+select rls_test.expect_affected('11: delete account that is sole admin of one group and creator of content',
+  $q$delete from auth.users where id = rls_test.u('del_admin')$q$, 1);
+select rls_test.expect_rows('11: group where deleted user was sole admin is gone',
+  $q$select 1 from public.groups where id = rls_test.v('g_solo')$q$, 0);
+select rls_test.expect_rows('11: group with another admin is kept with created_by null',
+  $q$select 1 from public.groups where id = rls_test.v('g_kept') and created_by is null$q$, 1);
+select rls_test.expect_rows('11: other admin still admin of kept group',
+  $q$select 1 from public.memberships
+     where group_id = rls_test.v('g_kept') and user_id = rls_test.u('del_other') and role = 'admin'$q$, 1);
+select rls_test.expect_rows('11: task, event, invite kept with created_by null',
+  $q$select 1 from public.tasks where group_id = rls_test.v('g_kept') and created_by is null
+     union all select 1 from public.events where group_id = rls_test.v('g_kept') and created_by is null
+     union all select 1 from public.invites where group_id = rls_test.v('g_kept') and created_by is null$q$, 3);
+
+select rls_test.as_user('del_other');
+select rls_test.expect_error('11: last-admin guard still blocks normal demotion',
+  $q$update public.memberships set role = 'member'
+     where group_id = rls_test.v('g_kept') and user_id = auth.uid()$q$, '%at least one admin%');
 
 -- ===== Summary =====
 select rls_test.as_postgres();

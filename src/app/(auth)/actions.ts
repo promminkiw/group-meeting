@@ -12,7 +12,9 @@ export type AuthState = {
   needsEmailConfirmation?: boolean;
 };
 
-const MIN_PASSWORD_LENGTH = 6;
+// สมัครใหม่ต้อง 8 ตัวขึ้นไป แต่ login ยังรับ 6 เพราะบัญชีเดิมอาจตั้งไว้ 6-7 ตัว
+const MIN_SIGNUP_PASSWORD_LENGTH = 8;
+const MIN_LOGIN_PASSWORD_LENGTH = 6;
 const MAX_DISPLAY_NAME_LENGTH = 80;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -21,10 +23,10 @@ function readText(formData: FormData, key: string): string {
   return typeof value === "string" ? value : "";
 }
 
-function validateCredentials(email: string, password: string): string | null {
+function validateCredentials(email: string, password: string, minPasswordLength: number): string | null {
   if (!EMAIL_PATTERN.test(email)) return "รูปแบบอีเมลไม่ถูกต้อง";
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return `รหัสผ่านต้องมีอย่างน้อย ${MIN_PASSWORD_LENGTH} ตัวอักษร`;
+  if (password.length < minPasswordLength) {
+    return `รหัสผ่านต้องมีอย่างน้อย ${minPasswordLength} ตัวอักษร`;
   }
   return null;
 }
@@ -39,7 +41,7 @@ export async function signInWithPassword(
 
   const values = { email };
 
-  const validationError = validateCredentials(email, password);
+  const validationError = validateCredentials(email, password, MIN_LOGIN_PASSWORD_LENGTH);
   if (validationError) return { error: validationError, values };
 
   const supabase = await createClient();
@@ -65,14 +67,23 @@ export async function signUpWithPassword(
   if (displayName.length < 1 || displayName.length > MAX_DISPLAY_NAME_LENGTH) {
     return { error: `ชื่อที่แสดงต้องมี 1-${MAX_DISPLAY_NAME_LENGTH} ตัวอักษร`, values };
   }
-  const validationError = validateCredentials(email, password);
+  const validationError = validateCredentials(email, password, MIN_SIGNUP_PASSWORD_LENGTH);
   if (validationError) return { error: validationError, values };
+
+  // ให้ลิงก์ยืนยันอีเมลผ่าน callback เพื่อ login ให้เลยและพากลับไปที่ next (เช่นลิงก์เชิญ)
+  const origin = await getRequestOrigin();
+  let emailRedirectTo: string | undefined;
+  if (origin) {
+    const callbackUrl = new URL("/auth/callback", origin);
+    callbackUrl.searchParams.set("next", next);
+    emailRedirectTo = callbackUrl.toString();
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: displayName } },
+    options: { data: { full_name: displayName }, emailRedirectTo },
   });
   if (error) {
     console.error("signUpWithPassword failed:", error.code ?? error.status);

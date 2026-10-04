@@ -2,6 +2,8 @@
 
 เว็บแอปจัดการงานและนัดเวลาสำหรับกลุ่มนักศึกษาขนาดใหญ่ (ชมรม, กิจกรรมคณะ, หลายสิบคน)
 
+**เว็บจริง:** https://group-meeting-mauve.vercel.app (สมัครด้วยอีเมลหรือ login ด้วย Google)
+
 ## ปัญหาที่แก้
 
 กลุ่มใหญ่ที่ใช้ LINE กลุ่มทำงานร่วมกันเจอ 2 เรื่อง
@@ -162,7 +164,7 @@ erDiagram
 
 1. ติดตั้ง dependency: `npm install`
 2. สร้างโปรเจกต์ที่ https://supabase.com (region Southeast Asia - Singapore)
-3. เปิด SQL Editor แล้วรันไฟล์ใน `supabase/migrations` ตามลำดับเลขทีละไฟล์ (000001 ถึง 000005)
+3. เปิด SQL Editor แล้วรันไฟล์ใน `supabase/migrations` ตามลำดับเลขทีละไฟล์ (000001 ถึง 000006)
 4. สร้างไฟล์ `.env.local` จาก `.env.example` แล้วใส่ค่า Project URL และ publishable (anon) key
    จาก Project Settings > API Keys (ห้ามใช้ `service_role` key ในแอปนี้)
 5. ที่ Supabase > Authentication > URL Configuration ตั้ง Site URL เป็น `http://localhost:3000`
@@ -199,7 +201,8 @@ npm run build
 
 ## ข้อจำกัดที่รู้อยู่แล้ว
 
-- **ไม่รองรับการลบบัญชีผู้ใช้:** FK `created_by` ของ `groups`/`invites`/`tasks` ไม่มี `on delete` ต้องตัดสินนโยบายเจ้าของข้อมูลก่อน
+- **ลบบัญชีผู้ใช้แล้วกลุ่มที่เป็น admin คนเดียวถูกลบไปด้วย:** งานและนัดหมายในกลุ่มนั้นหายทั้งหมด ส่วนกลุ่มที่ยังมี admin คนอื่นยังอยู่ (`created_by` กลายเป็น null)
+- **ไม่มี rate limit ของแอปเองที่ login/สมัคร:** Supabase เห็น IP ของ server Vercel ไม่ใช่ IP ผู้ใช้
 - **admin ทุกคนมีสิทธิ์เท่ากัน:** admin คนไหนก็ลด/ลบ admin คนอื่นได้ (กันกลุ่มไม่มี admin ด้วย trigger)
 - **การสร้างงานพร้อมผู้รับผิดชอบ และการบันทึกเวลาว่าง ไม่ใช่ transaction เดียว:** ทำจากฝั่งแอป
   หากต้องการ atomic จริงควรเพิ่ม RPC ใน database

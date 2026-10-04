@@ -38,8 +38,8 @@ export function SignupForm({ next }: { next: string }) {
         type="password"
         autoComplete="new-password"
         required
-        minLength={6}
-        helper="อย่างน้อย 6 ตัวอักษร"
+        minLength={8}
+        helper="อย่างน้อย 8 ตัวอักษร"
       />
       {/* ข้อความยืนยันอีเมลมาทาง state.error แต่ไม่ใช่ความผิดพลาด จึงแสดงเป็น info */}
       <Alert tone={state.needsEmailConfirmation ? "info" : "error"}>{state.error}</Alert>

@@ -7,8 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedFilter } from "@/components/ui/tabs";
 import { formatEventRange, parseCalendarView, visibleSlotRange } from "@/lib/availability/display";
 import { getGroupAvailability, getUpcomingEvents } from "@/lib/availability/dal";
-import { computeHeatmap, DAYS_PER_WEEK } from "@/lib/availability/heatmap";
-import { nextOccurrenceDate } from "@/lib/availability/slots";
+import { computeHeatmap } from "@/lib/availability/heatmap";
 import { getGroupContext } from "@/lib/groups/dal";
 import { can } from "@/lib/permissions";
 import { CalendarHeatmap } from "./calendar-heatmap";
@@ -45,8 +44,6 @@ export default async function CalendarPage({
   ).size;
   const respondedPercent = members.length === 0 ? 0 : Math.round((respondedCount / members.length) * 100);
 
-  const now = new Date();
-  const nextDates = Array.from({ length: DAYS_PER_WEEK }, (_, day) => nextOccurrenceDate(day, now));
   const canCreateEvent = can(role, "createEvent");
   const basePath = `/groups/${group.id}/calendar`;
 
@@ -146,14 +143,15 @@ export default async function CalendarPage({
           />
         )}
 
+        {/* Next 16 ไม่รวม search params ใน state key ของ segment จึงต้องใส่ key เองเพื่อล้างช่องที่เลือกเมื่อเปลี่ยน view */}
         <CalendarHeatmap
+          key={view}
           groupId={group.id}
           grid={grid}
           slots={visibleSlots}
           members={members.map((member) => ({ userId: member.userId, displayName: member.displayName }))}
           startSlot={start}
           endSlot={end}
-          nextDates={nextDates}
           canCreateEvent={canCreateEvent}
         />
       </section>

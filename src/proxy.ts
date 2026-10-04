@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
-import { isPublicPath } from "@/lib/auth/paths";
+import { isPublicPath, sanitizeNextPath } from "@/lib/auth/paths";
 
 // optimistic check เท่านั้น การตรวจจริงอยู่ที่ DAL (verifySession)
 export async function proxy(request: NextRequest) {
@@ -26,7 +26,9 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    return redirectWithCookies(new URL("/", request.url));
+    // คง next ไว้ เช่นเปิดลิงก์เชิญที่พามาหน้า login ทั้งที่ login อยู่แล้ว
+    const next = sanitizeNextPath(request.nextUrl.searchParams.get("next"));
+    return redirectWithCookies(new URL(next, request.url));
   }
 
   return response;

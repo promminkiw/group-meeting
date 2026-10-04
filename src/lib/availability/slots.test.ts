@@ -5,6 +5,7 @@ import {
   diffSlots,
   keySetToSlots,
   nextOccurrenceDate,
+  nextSlotDate,
   parseSlotKey,
   parseSlotKeys,
   slotsToKeySet,
@@ -60,6 +61,33 @@ describe("nextOccurrenceDate", () => {
     expect(nextOccurrenceDate(7, saturday)).toBeNull();
     expect(nextOccurrenceDate(-1, saturday)).toBeNull();
     expect(nextOccurrenceDate(1.5, saturday)).toBeNull();
+  });
+});
+
+describe("nextSlotDate", () => {
+  // 05:00 UTC เสาร์ 2026-10-03 = 12:00 เสาร์ในไทย
+  const saturdayNoon = new Date("2026-10-03T05:00:00Z");
+  it("ช่องของวันนี้ที่ยังไม่จบใช้วันนี้", () => {
+    expect(nextSlotDate(5, 24, saturdayNoon)).toBe("2026-10-03");
+    expect(nextSlotDate(5, 47, saturdayNoon)).toBe("2026-10-03");
+  });
+  it("ช่องของวันนี้ที่จบพอดีหรือผ่านไปแล้วเลื่อนไปสัปดาห์หน้า", () => {
+    // ช่อง 23 = 11:30-12:00 จบพอดีตอนนี้
+    expect(nextSlotDate(5, 23, saturdayNoon)).toBe("2026-10-10");
+    expect(nextSlotDate(5, 0, saturdayNoon)).toBe("2026-10-10");
+  });
+  it("วันอื่นไม่เปลี่ยนจาก nextOccurrenceDate", () => {
+    expect(nextSlotDate(6, 0, saturdayNoon)).toBe("2026-10-04");
+    expect(nextSlotDate(4, 0, saturdayNoon)).toBe("2026-10-09");
+  });
+  it("เลื่อนข้ามปีได้", () => {
+    // 2026-12-31 เป็นวันพฤหัสบดี (3), 05:00 UTC = 12:00 ในไทย
+    expect(nextSlotDate(3, 0, new Date("2026-12-31T05:00:00Z"))).toBe("2027-01-07");
+  });
+  it("คืน null เมื่อวันหรือช่องไม่ถูกต้อง", () => {
+    expect(nextSlotDate(7, 0, saturdayNoon)).toBeNull();
+    expect(nextSlotDate(5, 48, saturdayNoon)).toBeNull();
+    expect(nextSlotDate(5, -2, saturdayNoon)).toBeNull();
   });
 });
 

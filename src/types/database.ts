@@ -14,7 +14,8 @@ export type GroupRow = {
   id: string;
   name: string;
   description: string | null;
-  created_by: string;
+  // null เมื่อบัญชีผู้สร้างถูกลบ (migration 000006)
+  created_by: string | null;
   created_at: string;
 };
 
@@ -29,7 +30,7 @@ export type InviteRow = {
   id: string;
   group_id: string;
   code: string;
-  created_by: string;
+  created_by: string | null;
   expires_at: string | null;
   max_uses: number | null;
   use_count: number;
@@ -43,7 +44,7 @@ export type TaskRow = {
   title: string;
   description: string | null;
   deadline: string | null;
-  created_by: string;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -69,7 +70,7 @@ export type EventRow = {
   description: string | null;
   starts_at: string;
   ends_at: string;
-  created_by: string;
+  created_by: string | null;
   created_at: string;
 };
 
