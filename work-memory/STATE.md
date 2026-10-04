@@ -3,16 +3,14 @@ Updated: 2026-10-04
 Goal: เว็บแอปจัดการงานและนัดเวลาสำหรับกลุ่มนักศึกษา ใช้งานได้จริงและ deploy บน Vercel (portfolio)
 
 ## Next
-- [ ] `next` ปิดงานรอบสุดท้าย (แก้แล้ว 2026-10-04 ยังไม่ commit) เหลือ:
-  - ผู้ใช้: รัน migration 000007, commit + push แก้ CI (run แรกของ e69038c ล้มที่ tsc เพราะไม่มี next typegen แก้แล้วยืนยันใน clone สะอาด) แล้วดู CI เขียว (email template ข้ามไป: แก้ไม่ได้เพราะไม่มี custom SMTP ผู้ใช้เลือกข้าม 2026-10-04 README บันทึกเป็นข้อจำกัดแล้ว)
-  - ตรวจในเบราว์เซอร์ (ต้อง login): ลูกศรในกริดเวลาว่าง/heatmap, ปุ่ม sm บนมือถือ, confirm ยกเลิกลิงก์เชิญ
-  - ทดสอบบนเว็บจริง: ลิงก์เชิญ -> สมัครอีเมล -> ยืนยันในเบราว์เซอร์เดียวกัน -> กลับมาหน้า join (ข้ามอุปกรณ์ต้องได้ข้อความ error=confirm ให้ login เอง)
-- [ ] เก็บกวาดบัญชีทดสอบใน Supabase จริง: Admin, User, กลุ่ม "ชมรมทดสอบ", บัญชี Google ที่สร้างตอนทดสอบ OAuth, บัญชีอีเมลที่สมัครทดสอบบน Vercel (B4) ระวังอย่าลบ Kariwqq ที่เป็นเจ้าของข้อมูล demo (ทำหลังรัน migration 000006 เพราะก่อนหน้านั้นลบบัญชีที่สร้างกลุ่มไม่ได้)
+- [ ] (ผู้ใช้เลือกข้าม 2026-10-04) ทดสอบสมัครอีเมลจากลิงก์เชิญบนเว็บจริง: emailRedirectTo เปลี่ยนเป็น /auth/confirm (fallback code) ใน e69038c ยังไม่เคยถูกใช้จริงบน production มีแค่ unit test ถ้ามีคนแจ้งว่ายืนยันอีเมลแล้วเข้าไม่ได้ ให้ดูตรงนี้ก่อน
+- [ ] (ผู้ใช้เลือกข้าม 2026-10-04) เก็บกวาดบัญชีทดสอบ: Admin, User, กลุ่ม "ชมรมทดสอบ", บัญชีอีเมลทดสอบ, demo1-5 (ไม่มีรหัสผ่าน); ห้ามลบ Kariwqq; ลบผ่าน dashboard ได้แล้วหลัง migration 000006
 - [ ] เลื่อนไว้จากรีวิว: app rate limit login/signup (ต้องใช้บริการภายนอก), CSP เต็ม (form-action 'self' จะบล็อก redirect ไป Google), จำกัดจำนวนกลุ่มต่อ user, task_assignees race, ban list หลัง kick, task_group_id เป็น RPC, RLS ต่อแถวช้า (ต้องวัด), ความหมาย status filter
 - [ ] ตัดสินใจเรื่อง RPC: dashboard aggregate ใน DB, createTask/saveAvailability แบบ atomic, getClaims() ใน proxy
 - [ ] อธิบายแนวคิดที่ยังไม่ได้สอนก่อนทำ (Server vs Client Components, กริดเวลา, slot -> เวลาจริง)
 
 ## Done
+- [x] 2026-10-04 ผู้ใช้รัน migration 000007 แล้ว; CI เขียว (e69a166); สถานะโปรเจกต์: deploy แล้วและใช้งานได้ ผู้ใช้ถือว่าจบ เหลือ 2 ข้อที่เลือกข้าม (ด้านบน)
 - [x] 2026-10-04 ปิดงานตามรีวิวรวม 5 agent + dragon (ยังไม่ commit): /auth/confirm (verifyOtp token_hash + fallback code), signUp emailRedirectTo -> /auth/confirm, ข้อความ login error=auth/confirm (hasOwn), ปุ่ม sm max-md:min-h-11, confirm ยกเลิกลิงก์เชิญ, focus + role=alert ตอนรหัสไม่ตรง (FieldMessage error มี role=alert ทุกฟอร์ม), ปุ่มตา label คงที่, ariaLabel ใน PendingButton (ลบนัดหมาย/ลบออกจากกลุ่ม/ลบออกจากงาน), คำไทย "เอาออก" -> "ลบออกจากงาน", legend heatmap, ปุ่มทั้งวัน/ล้าง min-h-8 text-xs, roving tabindex ลูกศรในกริด (lib/availability/grid-navigation.ts + use-roving-grid.ts), migration 000007 lock groups ใน delete_sole_admin_groups, LICENSE MIT, CI .github/workflows/ci.yml, engines node>=22, README (วิธีลองใช้, badge, หัวข้อ 8 hardening, ER created_by nullable, ข้อจำกัด, email template, License); test 257 ผ่าน (+confirm route 7, auth actions 7, proxy 5, grid-navigation 6), tsc/lint ผ่าน, ไม่ได้รัน build เพราะ dev เปิดอยู่; ตรวจเบราว์เซอร์แล้ว: /auth/confirm ไม่มี token -> login?error=confirm&next คงไว้, error=constructor ไม่แสดงอะไร, รหัสไม่ตรง focus ช่องยืนยัน + role=alert
 - [x] 2026-10-04 ผู้ใช้รัน migration 000006 + rls_smoke ผ่านหมด, ตั้ง Minimum password length 8
 - [x] 2026-10-04 ฟอร์มสมัคร: ช่องยืนยันรหัสผ่าน (เตือนตอนกดสมัคร + server ตรวจซ้ำ), ปุ่มตาทุกช่องรหัสผ่าน (components/ui/password-input.tsx), ค่าคงที่ใน lib/auth/password.ts; tsc/lint/232 test/build ผ่าน; ตรวจในเบราว์เซอร์เดสก์ท็อปแล้ว (ปุ่มตาสลับ type + aria-label, เตือนไม่ตรงไม่ส่งฟอร์ม, ข้อความหายเมื่อแก้, login มีปุ่มตา, ไม่มี console error) ยังไม่ได้ตรวจ 375px; commit 67f70d2
