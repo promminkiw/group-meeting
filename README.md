@@ -211,5 +211,25 @@ npm run build
 
 ## Screenshot
 
-ยังไม่ได้เพิ่ม (ต้องถ่ายจากแอปที่รันกับ Supabase จริง) ควรมีอย่างน้อย: dashboard "ใครค้างอะไร",
-รายการงานพร้อม filter, heatmap ปฏิทินกลาง, หน้ากรอกเวลาว่าง และมุมมองบนมือถือ
+ถ่ายจากแอปที่รันกับ Supabase จริง ใช้ข้อมูลตัวอย่างจาก `supabase/seed/demo_data.sql`
+(ลบได้ด้วย `supabase/seed/demo_cleanup.sql`)
+
+**ภาพรวมกลุ่ม: สรุปงานและ "ใครค้างอะไร"**
+
+![ภาพรวมกลุ่ม](docs/screenshots/dashboard.png)
+
+**รายการงานพร้อม filter และสถานะรายคน**
+
+![รายการงาน](docs/screenshots/tasks.png)
+
+**ปฏิทินกลาง: heatmap ช่วงเวลาที่สมาชิกว่างตรงกัน**
+
+![heatmap ปฏิทินกลาง](docs/screenshots/calendar-heatmap.png)
+
+**กรอกเวลาว่างของฉัน**
+
+![กรอกเวลาว่าง](docs/screenshots/availability.png)
+
+**มุมมองบนมือถือ (375px)**
+
+<img src="docs/screenshots/mobile.png" alt="มุมมองบนมือถือ" width="320">
