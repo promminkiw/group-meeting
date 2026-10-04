@@ -54,7 +54,7 @@ export function FieldMessage({
 }) {
   if (error) {
     return (
-      <p id={messageId} className="mt-1.5 flex gap-1.5 text-xs leading-[1.6] text-overdue-fg">
+      <p id={messageId} role="alert" className="mt-1.5 flex gap-1.5 text-xs leading-[1.6] text-overdue-fg">
         <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
         <span>{error}</span>
       </p>

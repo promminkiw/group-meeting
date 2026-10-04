@@ -8,7 +8,9 @@ import { deleteEvent, type EventActionState } from "./actions";
 
 const initialState: EventActionState = {};
 
-export function DeleteEventForm({ groupId, eventId }: { groupId: string; eventId: string }) {
+type Props = { groupId: string; eventId: string; title: string };
+
+export function DeleteEventForm({ groupId, eventId, title }: Props) {
   const [state, formAction] = useActionState(deleteEvent, initialState);
 
   return (
@@ -22,7 +24,14 @@ export function DeleteEventForm({ groupId, eventId }: { groupId: string; eventId
       <input type="hidden" name="groupId" value={groupId} />
       <input type="hidden" name="eventId" value={eventId} />
       <Alert tone="error">{state.error}</Alert>
-      <PendingButton label="ลบ" pendingLabel="กำลังลบ..." variant="danger" size="sm" icon={Trash2} />
+      <PendingButton
+        label="ลบนัดหมาย"
+        pendingLabel="กำลังลบ..."
+        variant="danger"
+        size="sm"
+        icon={Trash2}
+        ariaLabel={`ลบนัดหมาย: ${title}`}
+      />
     </form>
   );
 }

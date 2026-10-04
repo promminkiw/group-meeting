@@ -1,8 +1,17 @@
 # Group Meeting
 
+[![CI](https://github.com/promminkiw/group-meeting/actions/workflows/ci.yml/badge.svg)](https://github.com/promminkiw/group-meeting/actions/workflows/ci.yml)
+
 เว็บแอปจัดการงานและนัดเวลาสำหรับกลุ่มนักศึกษาขนาดใหญ่ (ชมรม, กิจกรรมคณะ, หลายสิบคน)
 
-**เว็บจริง:** https://group-meeting-mauve.vercel.app (สมัครด้วยอีเมลหรือ login ด้วย Google)
+**เว็บจริง:** https://group-meeting-mauve.vercel.app
+
+### วิธีลองใช้
+
+1. สมัครด้วย Google หรืออีเมล (สมัครด้วยอีเมลต้องกดลิงก์ยืนยันในอีเมลก่อน)
+2. บัญชีใหม่ยังไม่มีกลุ่ม จึงเห็นหน้าว่าง ให้กด "สร้างกลุ่ม" แล้วลองสร้างงานและกรอกเวลาว่าง
+3. ลองเชิญบัญชีที่สองด้วยลิงก์เชิญจากหน้า "สมาชิก" เพื่อดู heatmap ที่มีหลายคน
+4. อยากเห็นหน้าตาตอนมีข้อมูลเยอะ ดู [Screenshot](#screenshot) ท้ายไฟล์
 
 ## ปัญหาที่แก้
 
@@ -22,7 +31,8 @@
   (todo / doing / done), dashboard "ใครค้างอะไร", filter ตามคน/สถานะ/deadline และ pagination
 - **ปฏิทินกลาง:** กรอกเวลาว่างประจำสัปดาห์ครั้งเดียว (ช่องละ 30 นาที) ใช้ได้ทุกกลุ่ม,
   heatmap จำนวนคนว่างต่อช่วงเวลา, กดช่องดูรายชื่อว่าง/ไม่ว่าง, admin สร้างนัดหมายจากช่องที่เลือก
-- **Auth:** email + password และ Google ผ่าน Supabase Auth
+- **Auth:** email + password (ยืนยันอีเมล, ยืนยันรหัสผ่าน, ปุ่มแสดง/ซ่อนรหัส) และ Google ผ่าน Supabase Auth
+- **การเข้าถึง:** ทุกช่องฟอร์มมี label, ข้อความ error ถูกประกาศให้ screen reader และตารางเวลาใช้ปุ่มลูกศรเลื่อนช่องได้
 
 ## Tech stack
 
@@ -82,11 +92,22 @@ RLS ตอบได้แค่ "แถวไหนแก้ได้" ไม่
 กันย้ายแถว membership ข้ามกลุ่ม, ตรวจว่าผู้รับงานเป็นสมาชิกกลุ่ม และใช้ column-level privilege
 (`grant update (status)`) จำกัดคอลัมน์ที่แก้ได้
 
+### 8. Hardening หลังรีวิวความปลอดภัย
+
+- **Security headers** (`next.config.ts`): `frame-ancestors 'none'` + `X-Frame-Options` กัน clickjacking,
+  `Referrer-Policy` กันโค้ดเชิญใน URL รั่วไปเว็บอื่น, `nosniff` และปิด `X-Powered-By`
+- **ตรวจความยาวใน database** (migration 000006): description, โค้ดเชิญ และ `avatar_url` (ต้องเป็น https)
+  มี CHECK constraint ตรงกับ validation ฝั่งแอป เพราะ anon key อยู่ใน browser ใครก็เรียก API ตรงข้ามแอปได้
+- **ยืนยันอีเมลข้ามอุปกรณ์ได้** (`/auth/confirm`): ใช้ `token_hash` + `verifyOtp` แทน PKCE code
+  ที่ต้องเปิดลิงก์ในเบราว์เซอร์เดียวกับตอนสมัคร
+- **รหัสผ่านสมัครขั้นต่ำ 8 ตัว** ทั้งในแอปและใน Supabase dashboard (login ยังรับ 6 ตัวให้บัญชีเดิม)
+
 ## ER diagram
 
 ```mermaid
 erDiagram
     profiles ||--o{ memberships : "มี"
+    profiles |o--o{ groups : "สร้าง (null เมื่อบัญชีถูกลบ)"
     groups ||--o{ memberships : "มี"
     groups ||--o{ invites : "มี"
     groups ||--o{ tasks : "มี"
@@ -103,7 +124,7 @@ erDiagram
     groups {
         uuid id PK
         text name
-        uuid created_by FK
+        uuid created_by FK "nullable"
     }
     memberships {
         uuid group_id PK,FK
@@ -164,12 +185,13 @@ erDiagram
 
 1. ติดตั้ง dependency: `npm install`
 2. สร้างโปรเจกต์ที่ https://supabase.com (region Southeast Asia - Singapore)
-3. เปิด SQL Editor แล้วรันไฟล์ใน `supabase/migrations` ตามลำดับเลขทีละไฟล์ (000001 ถึง 000006)
+3. เปิด SQL Editor แล้วรันไฟล์ใน `supabase/migrations` ตามลำดับเลขทีละไฟล์ (000001 ถึง 000007)
 4. สร้างไฟล์ `.env.local` จาก `.env.example` แล้วใส่ค่า Project URL และ publishable (anon) key
    จาก Project Settings > API Keys (ห้ามใช้ `service_role` key ในแอปนี้)
 5. ที่ Supabase > Authentication > URL Configuration ตั้ง Site URL เป็น `http://localhost:3000`
    และเพิ่ม Redirect URL `http://localhost:3000/**`
 6. (ตอนพัฒนา) ปิด Confirm email ที่ Authentication > Sign In / Providers > Email
+   และตั้ง Minimum password length เป็น 8 ให้ตรงกับฟอร์มสมัคร
 7. (ถ้าต้องการ Google) เปิด provider Google และตั้ง OAuth client ใน Google Cloud Console
 8. `npm run dev` แล้วเปิด http://localhost:3000
 
@@ -177,14 +199,18 @@ erDiagram
 
 ```bash
 npm test                  # unit test (Vitest)
+npx tsc --noEmit
 npm run lint
 npm run build
 ```
 
+GitHub Actions (`.github/workflows/ci.yml`) รันทั้ง 4 คำสั่งนี้ทุกครั้งที่ push และเปิด pull request
+
 - Unit test ครอบคลุม logic หลัก: heatmap, การเช็คสิทธิ์ (`can`, `isLastAdmin`), filter/deadline/workload
-  ของงาน, การแปลง slot เป็นเวลาจริง, การกัน open redirect
-- ทดสอบ RLS กับ database จริง: วาง `supabase/tests/rls_smoke.sql` ใน Supabase SQL Editor
-  สคริปต์ทำงานใน transaction เดียวแล้ว rollback จึงไม่ทิ้งข้อมูล
+  ของงาน, การแปลง slot เป็นเวลาจริง, การเลื่อนช่องด้วยคีย์บอร์ด, การกัน open redirect
+- Test ของ route และ server action ด้วย mock Supabase: `proxy`, `/auth/confirm`, สมัครและ login
+- ทดสอบ RLS กับ database จริง: รัน migration ครบทุกไฟล์ก่อน แล้ววาง `supabase/tests/rls_smoke.sql`
+  ใน Supabase SQL Editor สคริปต์ทำงานใน transaction เดียวแล้ว rollback จึงไม่ทิ้งข้อมูล
   กรณี race ของ admin คนสุดท้ายที่ลดสิทธิ์พร้อมกัน ทดสอบอัตโนมัติไม่ได้ ดูขั้นตอนทำมือท้ายไฟล์
 
 หมายเหตุ: ถ้ารัน `tsc` ก่อน `next build` ครั้งแรกอาจฟ้อง type `PageProps` เพราะ route types ยังไม่ถูกสร้าง
@@ -197,11 +223,20 @@ npm run build
    และ `SITE_URL` (origin ของเว็บจริง เช่น `https://your-app.vercel.app`)
 3. ที่ Supabase เพิ่ม Site URL และ Redirect URL ของโดเมนจริง (`https://your-app.vercel.app/**`)
 4. **เปิด Confirm email กลับ** ที่ Authentication > Sign In / Providers > Email
-5. ตั้ง redirect URI ของ Google OAuth ให้ตรงกับโปรเจกต์ Supabase
+5. แก้ email template "Confirm signup" (Authentication > Emails) ให้ลิงก์ชี้ไปที่ `/auth/confirm`:
+   `<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email">ยืนยันอีเมล</a>`
+   (`RedirectTo` มี `?next=...` อยู่แล้วจากตอนสมัคร) ถ้าไม่แก้ แอปยังใช้ได้ แต่ต้องเปิดลิงก์ในเบราว์เซอร์เดียวกับตอนสมัคร
+6. ตั้ง redirect URI ของ Google OAuth ให้ตรงกับโปรเจกต์ Supabase
 
 ## ข้อจำกัดที่รู้อยู่แล้ว
 
-- **ลบบัญชีผู้ใช้แล้วกลุ่มที่เป็น admin คนเดียวถูกลบไปด้วย:** งานและนัดหมายในกลุ่มนั้นหายทั้งหมด ส่วนกลุ่มที่ยังมี admin คนอื่นยังอยู่ (`created_by` กลายเป็น null)
+- **ไม่มีหน้าลบบัญชีในแอป:** ลบได้ผ่าน Supabase dashboard (Authentication > Users) เท่านั้น
+  เมื่อลบแล้ว กลุ่มที่บัญชีนั้นเป็น admin คนเดียวจะถูกลบพร้อมงานและนัดหมายทั้งหมด
+  ส่วนกลุ่มที่ยังมี admin คนอื่นยังอยู่ (`created_by` กลายเป็น null)
+- **CSP ตั้งไว้แค่ `frame-ancestors`:** ยังไม่ใช่ CSP เต็มรูปแบบ เพราะ `form-action 'self'` จะบล็อกการ redirect
+  ไป Google ตอน login ผ่าน server action
+- **กฎรหัสผ่านต้องตั้งใน Supabase dashboard ด้วย:** ฟอร์มบังคับ 8 ตัว แต่ถ้าเรียก Supabase Auth API ตรง
+  จะใช้ค่า Minimum password length ของ dashboard
 - **ไม่มี rate limit ของแอปเองที่ login/สมัคร:** Supabase เห็น IP ของ server Vercel ไม่ใช่ IP ผู้ใช้
 - **admin ทุกคนมีสิทธิ์เท่ากัน:** admin คนไหนก็ลด/ลบ admin คนอื่นได้ (กันกลุ่มไม่มี admin ด้วย trigger)
 - **การสร้างงานพร้อมผู้รับผิดชอบ และการบันทึกเวลาว่าง ไม่ใช่ transaction เดียว:** ทำจากฝั่งแอป
@@ -215,7 +250,7 @@ npm run build
 ## Screenshot
 
 ถ่ายจากแอปที่รันกับ Supabase จริง ใช้ข้อมูลตัวอย่างจาก `supabase/seed/demo_data.sql`
-(ลบได้ด้วย `supabase/seed/demo_cleanup.sql`)
+(ลบได้ด้วย `supabase/seed/demo_cleanup.sql` ซึ่งลบกลุ่มตัวอย่าง สมาชิกสมมติ และเวลาว่างทั้งหมดของเจ้าของกลุ่มตัวอย่าง)
 
 **ภาพรวมกลุ่ม: สรุปงานและ "ใครค้างอะไร"**
 
@@ -236,3 +271,7 @@ npm run build
 **มุมมองบนมือถือ (375px)**
 
 <img src="docs/screenshots/mobile.png" alt="มุมมองบนมือถือ" width="320">
+
+## License
+
+[MIT](LICENSE)

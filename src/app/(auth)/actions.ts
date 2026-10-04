@@ -75,13 +75,13 @@ export async function signUpWithPassword(
     return { error: PASSWORD_MISMATCH_MESSAGE, values };
   }
 
-  // ให้ลิงก์ยืนยันอีเมลผ่าน callback เพื่อ login ให้เลยและพากลับไปที่ next (เช่นลิงก์เชิญ)
+  // email template ต่อ &token_hash=...&type=email ท้าย RedirectTo จึงต้องมี query อยู่แล้วเสมอ (next)
   const origin = await getRequestOrigin();
   let emailRedirectTo: string | undefined;
   if (origin) {
-    const callbackUrl = new URL("/auth/callback", origin);
-    callbackUrl.searchParams.set("next", next);
-    emailRedirectTo = callbackUrl.toString();
+    const confirmUrl = new URL("/auth/confirm", origin);
+    confirmUrl.searchParams.set("next", next);
+    emailRedirectTo = confirmUrl.toString();
   }
 
   const supabase = await createClient();

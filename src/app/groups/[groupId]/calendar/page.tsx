@@ -88,7 +88,7 @@ export default async function CalendarPage({
                       </p>
                     )}
                   </div>
-                  {canCreateEvent && <DeleteEventForm groupId={group.id} eventId={event.id} />}
+                  {canCreateEvent && <DeleteEventForm groupId={group.id} eventId={event.id} title={event.title} />}
                 </Card>
               );
             })}

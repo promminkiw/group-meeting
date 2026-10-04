@@ -38,6 +38,7 @@ export function MemberActions({ groupId, userId, displayName, role, isSelf }: Pr
             size="sm"
             icon={nextRole === "admin" ? ShieldCheck : ShieldOff}
             className="max-sm:w-full"
+            ariaLabel={`${nextRole === "admin" ? "ตั้งเป็นผู้ดูแล" : `เปลี่ยนเป็น${ROLE_LABELS.member}`}: ${displayName}`}
           />
         </form>
         {!isSelf && (
@@ -57,6 +58,7 @@ export function MemberActions({ groupId, userId, displayName, role, isSelf }: Pr
               size="sm"
               icon={UserMinus}
               className="max-sm:w-full"
+              ariaLabel={`ลบออกจากกลุ่ม: ${displayName}`}
             />
           </form>
         )}

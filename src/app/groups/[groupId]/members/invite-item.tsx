@@ -52,7 +52,14 @@ export function InviteItem({ groupId, inviteId, link, summary, active, statusLab
           <Button type="button" variant="ghost" size="sm" icon={Copy} onClick={copyLink}>
             คัดลอกลิงก์
           </Button>
-          <form action={revokeAction}>
+          <form
+            action={revokeAction}
+            onSubmit={(event) => {
+              if (!window.confirm("ยกเลิกลิงก์เชิญนี้ใช่หรือไม่? คนที่ได้ลิงก์ไปแล้วจะเข้ากลุ่มด้วยลิงก์นี้ไม่ได้อีก")) {
+                event.preventDefault();
+              }
+            }}
+          >
             <input type="hidden" name="groupId" value={groupId} />
             <input type="hidden" name="inviteId" value={inviteId} />
             <PendingButton

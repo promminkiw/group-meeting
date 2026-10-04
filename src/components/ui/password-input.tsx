@@ -42,7 +42,8 @@ export function PasswordInput({
         <button
           type="button"
           onClick={() => setVisible((current) => !current)}
-          aria-label={visible ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+          // label คงที่ + aria-pressed บอกสถานะ ไม่เปลี่ยน label ไม่งั้น screen reader อ่านซ้ำซ้อน
+          aria-label="แสดงรหัสผ่าน"
           aria-controls={id}
           aria-pressed={visible}
           className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-control text-ink-subtle transition-colors hover:text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600 motion-reduce:transition-none"

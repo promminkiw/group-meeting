@@ -14,6 +14,8 @@ type Props = {
   icon?: IconComponent;
   fullWidth?: boolean;
   className?: string;
+  // ใช้เมื่อมีปุ่มข้อความเดียวกันหลายแถว ต้องขึ้นต้นด้วย label เพื่อให้ตรงกับข้อความที่เห็น
+  ariaLabel?: string;
 };
 
 export function PendingButton({
@@ -24,6 +26,7 @@ export function PendingButton({
   icon,
   fullWidth,
   className,
+  ariaLabel,
 }: Props) {
   const { pending } = useFormStatus();
 
@@ -37,6 +40,7 @@ export function PendingButton({
       fullWidth={fullWidth}
       disabled={pending}
       aria-busy={pending || undefined}
+      aria-label={ariaLabel}
       className={className}
     >
       <span className="inline-grid">

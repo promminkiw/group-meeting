@@ -20,6 +20,7 @@ import {
   type AvailabilitySlot,
 } from "@/lib/availability/heatmap";
 import { nextSlotDate } from "@/lib/availability/slots";
+import { useRovingGrid } from "@/lib/availability/use-roving-grid";
 import { cn } from "@/lib/cn";
 import { CreateEventForm } from "./create-event-form";
 
@@ -51,6 +52,7 @@ export function CalendarHeatmap({
 }: Props) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const detailRef = useRef<HTMLDivElement>(null);
+  const { handleKeyDown, cellProps } = useRovingGrid({ startSlot, endSlot });
 
   useEffect(() => {
     if (selection) detailRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -66,9 +68,12 @@ export function CalendarHeatmap({
     <div className="space-y-4">
       <Card padding="none" className="overflow-hidden">
         <div className="max-h-[70vh] overflow-auto">
-          <table className="w-full min-w-[26rem] border-separate border-spacing-0 text-center">
+          <table
+            onKeyDown={handleKeyDown}
+            className="w-full min-w-[26rem] border-separate border-spacing-0 text-center"
+          >
             <caption className="sr-only">
-              ตารางจำนวนสมาชิกที่ว่างในแต่ละช่วงเวลา ช่องละ 30 นาที กดช่องเพื่อดูรายชื่อ
+              ตารางจำนวนสมาชิกที่ว่างในแต่ละช่วงเวลา ช่องละ 30 นาที ใช้ปุ่มลูกศรเลื่อนระหว่างช่อง กดช่องเพื่อดูรายชื่อ
             </caption>
             <thead>
               <tr>
@@ -108,6 +113,7 @@ export function CalendarHeatmap({
                       <td key={day} className="border-b border-r border-white p-0">
                         <button
                           type="button"
+                          {...cellProps(day, slot)}
                           onClick={() =>
                             setSelection({ day, slot, defaultDate: nextSlotDate(day, slot, new Date()) ?? "" })
                           }
@@ -226,13 +232,8 @@ function Legend() {
           <li key={item.level} className="flex items-center gap-1.5">
             <span
               aria-hidden="true"
-              className={cn(
-                "inline-block size-5 rounded border border-line text-center leading-5",
-                HEAT_LEVEL_CLASSES[item.level],
-              )}
-            >
-              {item.level === 0 ? 0 : ""}
-            </span>
+              className={cn("inline-block size-5 rounded border border-line", HEAT_LEVEL_CLASSES[item.level])}
+            />
             {item.label}
           </li>
         ))}

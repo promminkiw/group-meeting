@@ -21,6 +21,9 @@ export function SignupForm({ next }: { next: string }) {
     if (formData.get("password") !== formData.get("confirmPassword")) {
       event.preventDefault();
       setMismatchError(PASSWORD_MISMATCH_MESSAGE);
+      // ย้าย focus ไปช่องที่ผิด ให้เห็นข้อความแม้คีย์บอร์ดมือถือบังอยู่
+      const confirmInput = event.currentTarget.elements.namedItem("confirmPassword");
+      if (confirmInput instanceof HTMLInputElement) confirmInput.focus();
       return;
     }
     // กรณีแก้ช่องรหัสผ่านแรกจนตรงแล้ว ข้อความเดิมต้องหาย

@@ -10,14 +10,16 @@ import { cn } from "@/lib/cn";
 import { DAY_LABELS, DAY_SHORT_LABELS } from "@/lib/availability/display";
 import { DAYS_PER_WEEK, SLOTS_PER_DAY, slotIndexToTimeLabel } from "@/lib/availability/heatmap";
 import { toSlotKey } from "@/lib/availability/slots";
+import { useRovingGrid } from "@/lib/availability/use-roving-grid";
 import { saveAvailability, type AvailabilityActionState } from "./actions";
 
 const initialState: AvailabilityActionState = {};
 const DAYS = Array.from({ length: DAYS_PER_WEEK }, (_, day) => day);
 const SLOTS = Array.from({ length: SLOTS_PER_DAY }, (_, slot) => slot);
+const GRID_BOUNDS = { startSlot: 0, endSlot: SLOTS_PER_DAY };
 
 const DAY_ACTION_CLASSES =
-  "min-h-7 rounded py-1 text-[11px] font-medium text-primary-700 hover:underline";
+  "min-h-8 rounded py-1 text-xs font-medium text-primary-700 hover:underline";
 
 type DragMode = "add" | "remove";
 
@@ -31,6 +33,7 @@ export function AvailabilityGrid({ groupId, initialKeys }: { groupId: string; in
   const dragModeRef = useRef<DragMode | null>(null);
   // เมาส์จัดการที่ pointerdown แล้ว จึงต้องข้าม click ที่ตามมา (คีย์บอร์ด/ทัชยังใช้ click)
   const skipClickRef = useRef(false);
+  const { handleKeyDown, cellProps } = useRovingGrid(GRID_BOUNDS);
 
   const dirty = !sameSet(selected, new Set(initialKeys));
 
@@ -128,9 +131,12 @@ export function AvailabilityGrid({ groupId, initialKeys }: { groupId: string; in
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onClick={handleClick}
+            onKeyDown={handleKeyDown}
             className="w-full min-w-[26rem] select-none border-separate border-spacing-0 text-center"
           >
-            <caption className="sr-only">ตารางเลือกเวลาว่างรายสัปดาห์ ช่องละ 30 นาที</caption>
+            <caption className="sr-only">
+              ตารางเลือกเวลาว่างรายสัปดาห์ ช่องละ 30 นาที ใช้ปุ่มลูกศรเลื่อนระหว่างช่อง กด Space เพื่อเลือก
+            </caption>
             <thead>
               <tr>
                 <th
@@ -186,6 +192,7 @@ export function AvailabilityGrid({ groupId, initialKeys }: { groupId: string; in
                         <button
                           type="button"
                           data-slot-key={key}
+                          {...cellProps(day, slot)}
                           aria-pressed={isOn}
                           aria-label={`${DAY_LABELS[day]} ${slotIndexToTimeLabel(slot)}`}
                           className={cn(

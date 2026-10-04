@@ -57,7 +57,7 @@ export function RemoveAssigneeButton({ groupId, taskId, userId, displayName }: R
     <form
       action={formAction}
       onSubmit={(event) => {
-        if (!window.confirm(`เอา ${displayName} ออกจากงานนี้?`)) event.preventDefault();
+        if (!window.confirm(`ลบ ${displayName} ออกจากงานนี้?`)) event.preventDefault();
       }}
       className="flex flex-col items-end gap-1.5"
     >
@@ -65,11 +65,12 @@ export function RemoveAssigneeButton({ groupId, taskId, userId, displayName }: R
       <input type="hidden" name="taskId" value={taskId} />
       <input type="hidden" name="userId" value={userId} />
       <PendingButton
-        label="เอาออก"
-        pendingLabel="กำลังเอาออก..."
+        label="ลบออกจากงาน"
+        pendingLabel="กำลังลบ..."
         variant="danger"
         size="sm"
         icon={UserMinus}
+        ariaLabel={`ลบออกจากงาน: ${displayName}`}
       />
       <Alert tone="error">{state.error}</Alert>
     </form>
