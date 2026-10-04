@@ -3,7 +3,7 @@ Updated: 2026-10-04
 Goal: เว็บแอปจัดการงานและนัดเวลาสำหรับกลุ่มนักศึกษา ใช้งานได้จริงและ deploy บน Vercel (portfolio)
 
 ## Next
-- [ ] `next` ถ่าย screenshot ลง README (dashboard, รายการงาน, heatmap, กรอกเวลาว่าง, มือถือ)
+- [ ] `next` commit screenshot + seed + README (ผู้ใช้จะ commit เอง)
 - [ ] deploy Vercel (ตั้ง SITE_URL, เพิ่ม https://<โดเมน vercel>/** ใน Supabase Redirect URLs, เปิด Confirm email กลับ, Google consent ยังเป็น Testing: login ได้เฉพาะ Test users จนกว่าจะ Publish app)
 - [ ] ตัดสินใจเรื่อง push: repo GitHub origin (promminkiw/group-meeting) ว่างเปล่า ไม่มี branch เลย, main ในเครื่องยังผูก upstream origin/main ที่หายไปแล้ว (Vercel ต้องใช้ repo บน GitHub)
 - [ ] ตัดสินใจเรื่อง RPC: dashboard aggregate ใน DB, createTask/saveAvailability แบบ atomic, getClaims() ใน proxy
@@ -24,7 +24,9 @@ Goal: เว็บแอปจัดการงานและนัดเว�
 - [x] 2026-10-04 Google OAuth ใช้งานได้ ผู้ใช้ทดสอบ login ผ่าน (Supabase provider Google + Redirect URL http://localhost:3000/**; Google Cloud โปรเจกต์ group-meeting, client group-meeting-web)
 - [x] 2026-10-04 /login /signup ที่ 375px ผ่าน (ตรวจด้วย iframe credentialless ไม่ต้อง logout)
 - [x] 2026-10-04 ผู้ใช้ commit เอง: 323afac (fix availability grid), 594031a (STATE)
-- [x] 2026-10-04 สร้าง src/app/not-found.tsx (EmptyState SearchX ตาม DESIGN.md) ตรวจเดสก์ท็อป+375px, status 404, ปุ่มกลับหน้าแรกทำงาน; ยังไม่ commit
+- [x] 2026-10-04 สร้าง src/app/not-found.tsx (commit d8785d1)
+- [x] 2026-10-04 seed ข้อมูลตัวอย่าง supabase/seed/demo_data.sql (ผู้ใช้รันแล้ว; หาเจ้าของจาก auth.identities provider google = Kariwqq) + demo_cleanup.sql
+- [x] 2026-10-04 screenshot 5 ภาพใน docs/screenshots (dashboard, tasks, calendar-heatmap, availability, mobile) + README ส่วน Screenshot; ล้างเวลาว่างเดิมของ Kariwqq (ส-อา ทั้งวัน) แล้วใส่ชุดของ seed 58 ช่อง ถ่าย availability + heatmap ใหม่
 - [x] 2026-10-04 build ผ่าน (Next 16.3.8, 13 route), 227 test ผ่าน, lint ไม่มี error
 
 ## Blocked
@@ -41,3 +43,7 @@ Goal: เว็บแอปจัดการงานและนัดเว�
 - resize_window ของ Chrome ย่อ viewport ไม่ได้ (ยัง 1536px) ใช้วิธีแทนหน้า localhost ด้วย iframe กว้าง 375px ผ่าน javascript_tool ได้ผล
 - ดูหน้าแบบยังไม่ login ได้โดยไม่ต้อง logout: iframe ที่มี attribute credentialless ไม่ส่ง cookie
 - บัญชี Google ที่ใช้ทดสอบ OAuth ถูกสร้างเป็น user ใหม่ใน Supabase ด้วย ควรพิจารณาลบตอนเก็บกวาดข้อมูลทดสอบ
+- raw_app_meta_data.provider เก็บแค่ provider แรกที่สมัคร บัญชีอีเมลที่ผูก Google ภายหลังยังเป็น email ต้องดู auth.identities
+- ถ่าย screenshot: จอ Chrome สูงแค่ 639px ใช้ document.documentElement.style.zoom='0.8' + zoom region [340,0,1180,639] save_to_disk ได้ภาพ 1050x799; ซ่อน dev indicator ด้วย nextjs-portal{display:none}
+- SQL Editor ของ Supabase อาจมีข้อความค้างในช่อง ทำให้ syntax error (บรรทัดไม่ตรง) ให้ผู้ใช้ Ctrl+A ลบก่อนวาง
+- หลัง navigate คำสั่ง scroll ครั้งแรกอาจถูก reset (hydration) ให้สั่ง scroll ซ้ำในคำสั่งแยกก่อนถ่าย
