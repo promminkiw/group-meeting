@@ -122,7 +122,8 @@ export function AvailabilityGrid({ groupId, initialKeys }: { groupId: string; in
       ))}
 
       <Card padding="none" className="overflow-hidden">
-        <div className="max-h-[70vh] overflow-auto">
+        {/* relative กัน span sr-only (absolute) ในแต่ละช่องหลุดออกไปดันความสูงหน้า */}
+        <div className="relative max-h-[70vh] overflow-auto">
           <table
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
