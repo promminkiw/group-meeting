@@ -4,9 +4,9 @@ Goal: เว็บแอปจัดการงานและนัดเว�
 
 ## Next
 - [ ] `next` ปิดงานรอบสุดท้าย (แก้แล้ว 2026-10-04 ยังไม่ commit) เหลือ:
-  - ผู้ใช้: แก้ email template "Confirm signup" ตาม README (Deploy ข้อ 5) เพื่อให้ยืนยันข้ามอุปกรณ์ได้, รัน migration 000007, commit + push แล้วดู CI เขียว
+  - ผู้ใช้: รัน migration 000007, commit + push แก้ CI (run แรกของ e69038c ล้มที่ tsc เพราะไม่มี next typegen แก้แล้วยืนยันใน clone สะอาด) แล้วดู CI เขียว (email template ข้ามไป: แก้ไม่ได้เพราะไม่มี custom SMTP ผู้ใช้เลือกข้าม 2026-10-04 README บันทึกเป็นข้อจำกัดแล้ว)
   - ตรวจในเบราว์เซอร์ (ต้อง login): ลูกศรในกริดเวลาว่าง/heatmap, ปุ่ม sm บนมือถือ, confirm ยกเลิกลิงก์เชิญ
-  - ทดสอบบนเว็บจริง: ลิงก์เชิญ -> สมัครอีเมล -> ยืนยัน (ลองเปิดลิงก์บนอีกอุปกรณ์) -> กลับมาหน้า join
+  - ทดสอบบนเว็บจริง: ลิงก์เชิญ -> สมัครอีเมล -> ยืนยันในเบราว์เซอร์เดียวกัน -> กลับมาหน้า join (ข้ามอุปกรณ์ต้องได้ข้อความ error=confirm ให้ login เอง)
 - [ ] เก็บกวาดบัญชีทดสอบใน Supabase จริง: Admin, User, กลุ่ม "ชมรมทดสอบ", บัญชี Google ที่สร้างตอนทดสอบ OAuth, บัญชีอีเมลที่สมัครทดสอบบน Vercel (B4) ระวังอย่าลบ Kariwqq ที่เป็นเจ้าของข้อมูล demo (ทำหลังรัน migration 000006 เพราะก่อนหน้านั้นลบบัญชีที่สร้างกลุ่มไม่ได้)
 - [ ] เลื่อนไว้จากรีวิว: app rate limit login/signup (ต้องใช้บริการภายนอก), CSP เต็ม (form-action 'self' จะบล็อก redirect ไป Google), จำกัดจำนวนกลุ่มต่อ user, task_assignees race, ban list หลัง kick, task_group_id เป็น RPC, RLS ต่อแถวช้า (ต้องวัด), ความหมาย status filter
 - [ ] ตัดสินใจเรื่อง RPC: dashboard aggregate ใน DB, createTask/saveAvailability แบบ atomic, getClaims() ใน proxy
@@ -61,3 +61,5 @@ Goal: เว็บแอปจัดการงานและนัดเว�
 - form-action 'self' ใน CSP บล็อก redirect หลัง submit ฟอร์มไปโดเมนอื่น (Google OAuth ผ่าน server action) อย่าใส่ถ้าไม่เพิ่มโดเมน Supabase
 - ดูหน้าแบบยังไม่ login ด้วย fetch(credentials omit) + document.write แสดงผลได้แต่ React ไม่ hydrate กดอะไรไม่ได้ ต้องให้ผู้ใช้ logout
 - dev server compile หน้าใหม่หลังแก้ไฟล์ทำให้หน้า reload กลางการพิมพ์ ฟอร์มว่าง ให้รอหรือ find ใหม่แล้วกรอกซ้ำ
+- Supabase ไม่ให้แก้ email template ถ้ายังใช้ SMTP ในตัว (ปุ่ม Source กดไม่ได้) ต้องตั้ง custom SMTP ก่อน
+- CI/เครื่องใหม่ต้องรัน `next typegen` ก่อน `tsc --noEmit` ไม่งั้นหา PageProps/LayoutProps ไม่เจอ (ในเครื่องผ่านเพราะมี .next อยู่แล้ว)

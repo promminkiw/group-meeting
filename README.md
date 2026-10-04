@@ -98,8 +98,8 @@ RLS ตอบได้แค่ "แถวไหนแก้ได้" ไม่
   `Referrer-Policy` กันโค้ดเชิญใน URL รั่วไปเว็บอื่น, `nosniff` และปิด `X-Powered-By`
 - **ตรวจความยาวใน database** (migration 000006): description, โค้ดเชิญ และ `avatar_url` (ต้องเป็น https)
   มี CHECK constraint ตรงกับ validation ฝั่งแอป เพราะ anon key อยู่ใน browser ใครก็เรียก API ตรงข้ามแอปได้
-- **ยืนยันอีเมลข้ามอุปกรณ์ได้** (`/auth/confirm`): ใช้ `token_hash` + `verifyOtp` แทน PKCE code
-  ที่ต้องเปิดลิงก์ในเบราว์เซอร์เดียวกับตอนสมัคร
+- **รองรับการยืนยันอีเมลข้ามอุปกรณ์** (`/auth/confirm`): รับ `token_hash` + `verifyOtp` ซึ่งไม่ต้องใช้
+  PKCE code_verifier ใน cookie (ยังรับ code แบบเดิมด้วย) เปิดใช้เมื่อแก้ email template ได้ (ดูหัวข้อ Deploy)
 - **รหัสผ่านสมัครขั้นต่ำ 8 ตัว** ทั้งในแอปและใน Supabase dashboard (login ยังรับ 6 ตัวให้บัญชีเดิม)
 
 ## ER diagram
@@ -214,7 +214,7 @@ GitHub Actions (`.github/workflows/ci.yml`) รันทั้ง 4 คำสั
   กรณี race ของ admin คนสุดท้ายที่ลดสิทธิ์พร้อมกัน ทดสอบอัตโนมัติไม่ได้ ดูขั้นตอนทำมือท้ายไฟล์
 
 หมายเหตุ: ถ้ารัน `tsc` ก่อน `next build` ครั้งแรกอาจฟ้อง type `PageProps` เพราะ route types ยังไม่ถูกสร้าง
-ให้รัน `npx next typegen` หรือ build ก่อน
+ให้รัน `npx next typegen` หรือ build ก่อน (CI รัน `next typegen` ให้ก่อน `tsc`)
 
 ## Deploy บน Vercel
 
@@ -223,9 +223,10 @@ GitHub Actions (`.github/workflows/ci.yml`) รันทั้ง 4 คำสั
    และ `SITE_URL` (origin ของเว็บจริง เช่น `https://your-app.vercel.app`)
 3. ที่ Supabase เพิ่ม Site URL และ Redirect URL ของโดเมนจริง (`https://your-app.vercel.app/**`)
 4. **เปิด Confirm email กลับ** ที่ Authentication > Sign In / Providers > Email
-5. แก้ email template "Confirm signup" (Authentication > Emails) ให้ลิงก์ชี้ไปที่ `/auth/confirm`:
+5. (ไม่บังคับ ต้องตั้ง custom SMTP ก่อน Supabase จึงให้แก้ template) แก้ email template "Confirm signup"
+   (Authentication > Emails) ให้ลิงก์ชี้ไปที่ `/auth/confirm` เพื่อให้เปิดลิงก์ยืนยันจากอุปกรณ์อื่นแล้ว login ให้เลย:
    `<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email">ยืนยันอีเมล</a>`
-   (`RedirectTo` มี `?next=...` อยู่แล้วจากตอนสมัคร) ถ้าไม่แก้ แอปยังใช้ได้ แต่ต้องเปิดลิงก์ในเบราว์เซอร์เดียวกับตอนสมัคร
+   (`RedirectTo` มี `?next=...` อยู่แล้วจากตอนสมัคร)
 6. ตั้ง redirect URI ของ Google OAuth ให้ตรงกับโปรเจกต์ Supabase
 
 ## ข้อจำกัดที่รู้อยู่แล้ว
@@ -233,6 +234,9 @@ GitHub Actions (`.github/workflows/ci.yml`) รันทั้ง 4 คำสั
 - **ไม่มีหน้าลบบัญชีในแอป:** ลบได้ผ่าน Supabase dashboard (Authentication > Users) เท่านั้น
   เมื่อลบแล้ว กลุ่มที่บัญชีนั้นเป็น admin คนเดียวจะถูกลบพร้อมงานและนัดหมายทั้งหมด
   ส่วนกลุ่มที่ยังมี admin คนอื่นยังอยู่ (`created_by` กลายเป็น null)
+- **เปิดลิงก์ยืนยันอีเมลบนอุปกรณ์อื่นแล้วต้อง login เอง:** เว็บจริงยังใช้ email template เดิมและ SMTP ในตัวของ Supabase
+  (แก้ template ไม่ได้ถ้าไม่ตั้ง custom SMTP) อีเมลยืนยันสำเร็จ แต่ PKCE code ใช้ได้เฉพาะเบราว์เซอร์ที่กดสมัคร
+  หน้า login จึงบอกให้เข้าสู่ระบบเอง ระบบส่งอีเมลในตัวยังส่งได้ไม่กี่ฉบับต่อชั่วโมงด้วย
 - **CSP ตั้งไว้แค่ `frame-ancestors`:** ยังไม่ใช่ CSP เต็มรูปแบบ เพราะ `form-action 'self'` จะบล็อกการ redirect
   ไป Google ตอน login ผ่าน server action
 - **กฎรหัสผ่านต้องตั้งใน Supabase dashboard ด้วย:** ฟอร์มบังคับ 8 ตัว แต่ถ้าเรียก Supabase Auth API ตรง

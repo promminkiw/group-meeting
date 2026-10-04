@@ -20,6 +20,8 @@ jobs:
           cache: npm
 
       - run: npm ci
+      # PageProps/LayoutProps เป็น type ที่ Next สร้างใน .next ซึ่งเครื่อง CI ยังไม่มี
+      - run: npx next typegen
       - run: npx tsc --noEmit
       - run: npm run lint
       - run: npm test
