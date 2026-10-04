@@ -3,10 +3,9 @@ Updated: 2026-10-04
 Goal: เว็บแอปจัดการงานและนัดเวลาสำหรับกลุ่มนักศึกษา ใช้งานได้จริงและ deploy บน Vercel (portfolio)
 
 ## Next
-- [ ] `next` สร้าง src/app/not-found.tsx ระดับ root ให้ตรงดีไซน์ (ตอนนี้ 404 เป็นหน้า default ของ Next)
-- [ ] ถ่าย screenshot ลง README (dashboard, รายการงาน, heatmap, กรอกเวลาว่าง, มือถือ)
+- [ ] `next` ถ่าย screenshot ลง README (dashboard, รายการงาน, heatmap, กรอกเวลาว่าง, มือถือ)
 - [ ] deploy Vercel (ตั้ง SITE_URL, เพิ่ม https://<โดเมน vercel>/** ใน Supabase Redirect URLs, เปิด Confirm email กลับ, Google consent ยังเป็น Testing: login ได้เฉพาะ Test users จนกว่าจะ Publish app)
-- [ ] commit การแก้ availability-grid.tsx (relative) ที่ยังค้าง
+- [ ] ตัดสินใจเรื่อง push: repo GitHub origin (promminkiw/group-meeting) ว่างเปล่า ไม่มี branch เลย, main ในเครื่องยังผูก upstream origin/main ที่หายไปแล้ว (Vercel ต้องใช้ repo บน GitHub)
 - [ ] ตัดสินใจเรื่อง RPC: dashboard aggregate ใน DB, createTask/saveAvailability แบบ atomic, getClaims() ใน proxy
 - [ ] อธิบายแนวคิดที่ยังไม่ได้สอนก่อนทำ (Server vs Client Components, กริดเวลา, slot -> เวลาจริง)
 
@@ -24,6 +23,8 @@ Goal: เว็บแอปจัดการงานและนัดเว�
 - [x] 2026-10-04 404 ของ tasks/new, tasks/[taskId] หายหลังหยุด dev + ลบ .next ตรวจ 375px ผ่าน
 - [x] 2026-10-04 Google OAuth ใช้งานได้ ผู้ใช้ทดสอบ login ผ่าน (Supabase provider Google + Redirect URL http://localhost:3000/**; Google Cloud โปรเจกต์ group-meeting, client group-meeting-web)
 - [x] 2026-10-04 /login /signup ที่ 375px ผ่าน (ตรวจด้วย iframe credentialless ไม่ต้อง logout)
+- [x] 2026-10-04 ผู้ใช้ commit เอง: 323afac (fix availability grid), 594031a (STATE)
+- [x] 2026-10-04 สร้าง src/app/not-found.tsx (EmptyState SearchX ตาม DESIGN.md) ตรวจเดสก์ท็อป+375px, status 404, ปุ่มกลับหน้าแรกทำงาน; ยังไม่ commit
 - [x] 2026-10-04 build ผ่าน (Next 16.3.8, 13 route), 227 test ผ่าน, lint ไม่มี error
 
 ## Blocked
